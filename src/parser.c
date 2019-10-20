@@ -7,11 +7,13 @@
 
 #include "../include/parser.h"
 #include "../include/utils.h"
+#include "../include/functions.h"
 
-void Parse(FILE *f, INTERNAL_STATE *internal_state) {
-	internal_state->TOKEN_PTR = 0;
+void Parse(FILE *f, COMPILER_INTERNAL *internal_state) {
+	internal_state->TOKEN_PTR = internal_state->STATEMENT_POINTER = 0;
 	size_t characters_read = fread(internal_state->text_read, sizeof(char),
 	TEXT_READ_SIZE, f);
+	printf("read %ld characters\n", characters_read);
 	internal_state->CHARACTERS_READ = characters_read;
 	internal_state->FILE_PTR = internal_state->text_read;
 	internal_state->DATA_PTR = internal_state->data_for_tokens;
@@ -19,13 +21,33 @@ void Parse(FILE *f, INTERNAL_STATE *internal_state) {
 	do {
 		GetNextToken(internal_state, &t);
 		internal_state->tokens[internal_state->TOKEN_PTR++] = t;
+		if (t.type != IDENTIFIER_TOKEN && t.type != NUMBER_TOKEN)
+			printf("%d\n", t.type);
+		else {
+			if (t.type == IDENTIFIER_TOKEN)
+				printf("%d %s\n", t.type, (char*) t.data);
+			else if (t.type == NUMBER_TOKEN)
+				printf("%d %lld\n", t.type, *(long long*) t.data);
+		}
 	} while (t.type != FILE_END_TOKEN);
+	internal_state->TOKEN_PTR = 0;
+	Statement statement;
+	do {
+		GetNextStatement(internal_state, &statement);
+		internal_state->statements[internal_state->STATEMENT_POINTER++] =
+				statement;
+	} while (statement.type != NO_STATEMENT);
 }
 
-void GetNextToken(INTERNAL_STATE *state, Token *token) {
+void GetNextToken(COMPILER_INTERNAL *state, Token *token) {
 	char *ptr = state->FILE_PTR;
 	while (is_whitespace(*ptr))
 		ptr++;
+	if (*ptr == '\0') {
+		*token = Make_nodata_Token(FILE_END_TOKEN);
+		state->FILE_PTR = ptr;
+		return;
+	}
 	if (starts_with(ptr, "(")) {
 		*token = Make_nodata_Token(P_OPEN_TOKEN);
 		state->FILE_PTR = ++ptr;
@@ -71,6 +93,16 @@ void GetNextToken(INTERNAL_STATE *state, Token *token) {
 		state->FILE_PTR = ptr + 1;
 		return;
 	}
+	if (starts_with(ptr, "<-")) {
+		*token = Make_nodata_Token(ASSIGNMENT_TOKEN);
+		state->FILE_PTR = ptr + 2;
+		return;
+	}
+	if (starts_with(ptr, "=")) {
+		*token = Make_nodata_Token(ASSIGNMENT_TOKEN);
+		state->FILE_PTR = ptr + 1;
+		return;
+	}
 	if (starts_class(ptr, DIGIT_CLASS)) {
 		long long value = 0;
 		do {
@@ -95,4 +127,64 @@ void GetNextToken(INTERNAL_STATE *state, Token *token) {
 		state->FILE_PTR = ptr;
 		return;
 	}
+}
+
+void GetNextStatement(COMPILER_INTERNAL *state, Statement *statement) {
+	while (state->tokens[state->TOKEN_PTR].type == NEW_LINE_TOKEN)
+		state->TOKEN_PTR++;
+	if (state->tokens[state->TOKEN_PTR].type == FILE_END_TOKEN) {
+		statement->type = NO_STATEMENT;
+		return;
+	}
+	if (state->tokens[state->TOKEN_PTR].type == BEGIN_TOKEN) {
+		// composite statement
+		statement->type = COMPOSITE_STATEMENT;
+		unsigned int COMPOSITE_STATEMENT_ID =
+				state->COMPOSITE_STATEMENT_POINTER++;
+		statement->data =
+				(state->composite_statements + COMPOSITE_STATEMENT_ID);
+		Statement s;
+		(state->TOKEN_PTR)++;
+		unsigned int count = 0;
+		while (state->tokens[state->TOKEN_PTR].type != END_TOKEN) {
+			GetNextStatement(state, &s);
+			state->inside_composite_statements[state->INSIDE_COMPOSITE_STATEMENT_POINTER] =
+					s;
+			state->composite_statements[COMPOSITE_STATEMENT_ID].statements[count] =
+					&(state->inside_composite_statements[state->INSIDE_COMPOSITE_STATEMENT_POINTER]);
+			(state->INSIDE_COMPOSITE_STATEMENT_POINTER)++;
+			count++;
+			while (state->tokens[state->TOKEN_PTR].type == NEW_LINE_TOKEN)
+				state->TOKEN_PTR++;
+		}
+		state->composite_statements[COMPOSITE_STATEMENT_ID].inside_statements_count =
+				count;
+		state->TOKEN_PTR++;
+		return;
+	}
+	if (state->tokens[state->TOKEN_PTR].type == IDENTIFIER_TOKEN) {
+		if (state->tokens[state->TOKEN_PTR + 1].type == ASSIGNMENT_TOKEN) {
+			// assignment
+			statement->type = ASSIGNMENT_STATEMENT;
+			state->TOKEN_PTR += 2;
+			statement->data = (void*) (long long) state->TOKEN_PTR;
+			while (state->tokens[state->TOKEN_PTR].type != NEW_LINE_TOKEN)
+				state->TOKEN_PTR++;
+			return;
+		} else {
+			//function call
+			Function f;
+			int found;
+			GetFunction((const char*) state->tokens[state->TOKEN_PTR].data, &f,
+					&found);
+			if (found == 0) {
+				fprintf(stderr, "Function '%s' not found\n",
+						(const char*) state->tokens[state->TOKEN_PTR].data);
+			}
+		}
+	}
+	printf("Unknown token at beginning of statement %d '%s'\n",
+			state->tokens[state->TOKEN_PTR].type,
+			(char*) state->tokens[state->TOKEN_PTR].data);
+	state->TOKEN_PTR++;
 }

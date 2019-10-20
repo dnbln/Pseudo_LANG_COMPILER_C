@@ -37,4 +37,5 @@ int is_valid_identifier_other_char(const char a) {
 void Init_Utils() {
 	DIGIT_CLASS.belongs_to_class = is_digit;
 	IDENTIFIER_FIRST_CHARS.belongs_to_class = is_valid_identifier_first_char;
+	IDENTIFIER_OTHER_CHARS.belongs_to_class = is_valid_identifier_other_char;
 }
