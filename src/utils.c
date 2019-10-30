@@ -15,7 +15,7 @@ int starts_with(const char *a, const char *b) {
 }
 
 int starts_class(const char *a, CHARACTER_CLASS b) {
-	return (*b.belongs_to_class)(*a);
+	return b.belongs_to_class(*a);
 }
 
 int is_whitespace(const char a) {
@@ -38,4 +38,23 @@ void Init_Utils() {
 	DIGIT_CLASS.belongs_to_class = is_digit;
 	IDENTIFIER_FIRST_CHARS.belongs_to_class = is_valid_identifier_first_char;
 	IDENTIFIER_OTHER_CHARS.belongs_to_class = is_valid_identifier_other_char;
+}
+
+char* num_to_str(long long x, char *str) {
+	if (x == 0) {
+		str[0] = '0';
+		str[1] = '\0';
+		return str;
+	}
+	long long p = 1;
+	while (p <= x)
+		p *= 10;
+	p /= 10;
+	int ptr = 0;
+	while (p) {
+		str[ptr++] = '0' + (x / p) % 10;
+		p /= 10;
+	}
+	str[ptr] = '\0';
+	return str;
 }

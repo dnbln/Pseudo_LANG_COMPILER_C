@@ -21,7 +21,10 @@
 #define NUMBER_TOKEN 10U // NUMBER
 #define IDENTIFIER_TOKEN 11U // IDENTIFIER
 #define ASSIGNMENT_TOKEN 12U // ASSIGNMENT
-
+#define FROM_TO_TOKEN 13U // FROM/TO
+#define CONSOLE_TOKEN 14U // CONSOLE
+#define FILE_TOKEN 15U // FILE
+#define COMMA_TOKEN 16U
 
 // ARITHMETIC OPERATORS
 #define ADD 0U
@@ -29,16 +32,15 @@
 #define MULTIPLY 2U
 #define DIVIDE 3U
 
-
 typedef struct {
 	// the type of the token
 	unsigned type;
 	// data here, if any
 	// this data should be processed according to the type
-	void* data;
+	void *data;
 } Token;
 
-Token Make_nodata_Token	(int type); // makes a token that does not contain any data
-Token Make_data_Token	(int type, void* data); // makes a token that does contain data
+Token Make_nodata_Token(int type); // makes a token that does not contain any data
+Token Make_data_Token(int type, void *data); // makes a token that does contain data
 
 #endif /* INCLUDE_TOKENS_H_ */

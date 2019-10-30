@@ -7,11 +7,11 @@
 #include "../include/functions.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
-#define PREDEFINED_FUNCTIONS 0
+#define PREDEFINED_FUNCTIONS 1
 
 Function declared_functions[PREDEFINED_FUNCTIONS];
-Function NO_FUNCTION;
 
 void GetFunction(const char *name, Function *f, int *found) {
 	for (int i = 0; i < PREDEFINED_FUNCTIONS; i++) {
@@ -22,4 +22,89 @@ void GetFunction(const char *name, Function *f, int *found) {
 		}
 	}
 	*found = 0;
+}
+
+int end_of_line(Token *t); // returns the index in the array t of the first new line token
+
+ASMOP* print_generate_assembly(Token *t, ASMOP *memory, int *size, int *success);
+char* (*_varname)(const char *identifier_name);
+TYPE (*value_instructions)(Token*, int, ASMOP*, int*, int*);
+
+void Init_Functions(char* (*varname)(const char *identifier_name),
+		TYPE (*v_instructions)(Token*, int, ASMOP*, int*, int*)) {
+	strcpy(declared_functions[0].name, "print");
+	declared_functions[0].generate_assembly = &print_generate_assembly;
+	_varname = varname;
+	value_instructions = v_instructions;
+}
+
+ASMOP* print_generate_assembly(Token *t, ASMOP *memory, int *ptr, int *success) {
+	int eol = end_of_line(t);
+	*success = 1;
+	if ((eol > 2 && t[eol - 2].type == FROM_TO_TOKEN)
+			|| (eol > 3 && t[eol - 3].type == FROM_TO_TOKEN)) {
+		strcpy(memory[*ptr].operation, "movw");
+		if (t[eol - 2].type == FROM_TO_TOKEN && t[eol - 1].type == CONSOLE_TOKEN)
+			strcpy(memory[*ptr].operand1, "$1");
+		else if (t[eol - 3].type == FROM_TO_TOKEN
+				&& t[eol - 2].type == FILE_TOKEN
+				&& t[eol - 1].type == IDENTIFIER_TOKEN)
+			strcpy(memory[*ptr].operand1, _varname(t[eol - 1].data));
+		strcpy(memory[*ptr].operand2, STREAM_REGISTER);
+		memory[*ptr].operand3[0] = '\0';
+		(*ptr)++;
+	} else {
+		strcpy(memory[*ptr].operation, "movw");
+		strcpy(memory[*ptr].operand1, "$1");
+		strcpy(memory[*ptr].operand2, STREAM_REGISTER);
+		memory[*ptr].operand3[0] = '\0';
+		(*ptr)++;
+	}
+	int last_p = 0;
+	for (int i = 0; i < eol; i++) {
+		if (t[i].type == COMMA_TOKEN) {
+			int len = i - last_p;
+			TYPE type = value_instructions(t + last_p, len, memory, ptr,
+					success);
+			last_p = i + 1;
+			if (type.typeid == NUMBER_TYPE) {
+				// movq %rax, %rax # does nothing
+				strcpy(memory[*ptr].operation, "callq");
+				strcpy(memory[*ptr].operand1, "_print_number@PLT");
+				memory[*ptr].operand2[0] = '\0';
+				(*ptr)++;
+			} else if (type.typeid == STRING_TYPE) {
+				// movq %rax, %rax # does nothing
+				strcpy(memory[*ptr].operation, "callq");
+				strcpy(memory[*ptr].operand1, "_print_string@PLT");
+				memory[*ptr].operand2[0] = '\0';
+				(*ptr)++;
+			}
+		}
+	}
+
+	int len = eol - last_p;
+	TYPE type = value_instructions(t + last_p, len, memory, ptr, success);
+	if (type.typeid == NUMBER_TYPE) {
+		// movq %rax, %rax # does nothing
+		strcpy(memory[*ptr].operation, "callq");
+		strcpy(memory[*ptr].operand1, "_print_number@PLT");
+		memory[*ptr].operand2[0] = '\0';
+		(*ptr)++;
+	} else if (type.typeid == STRING_TYPE) {
+		// movq %rax, %rax # does nothing
+		strcpy(memory[*ptr].operation, "callq");
+		strcpy(memory[*ptr].operand1, "_print_string@PLT");
+		memory[*ptr].operand2[0] = '\0';
+		(*ptr)++;
+	}
+
+	return memory;
+}
+
+int end_of_line(Token *t) {
+	int i;
+	for (i = 0; t[i].type != FILE_END_TOKEN && t[i].type != NEW_LINE_TOKEN; i++)
+		;
+	return i;
 }

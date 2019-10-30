@@ -4,6 +4,8 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
+../src/compiler.c \
+../src/errorcodes.c \
 ../src/functions.c \
 ../src/main.c \
 ../src/parser.c \
@@ -11,6 +13,8 @@ C_SRCS += \
 ../src/utils.c 
 
 OBJS += \
+./src/compiler.o \
+./src/errorcodes.o \
 ./src/functions.o \
 ./src/main.o \
 ./src/parser.o \
@@ -18,6 +22,8 @@ OBJS += \
 ./src/utils.o 
 
 C_DEPS += \
+./src/compiler.d \
+./src/errorcodes.d \
 ./src/functions.d \
 ./src/main.d \
 ./src/parser.d \

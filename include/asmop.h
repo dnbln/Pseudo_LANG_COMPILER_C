@@ -8,11 +8,14 @@
 #ifndef INCLUDE_ASMOP_H_
 #define INCLUDE_ASMOP_H_
 
+#define OPERATION_SIZE 15
+#define OPERAND_SIZE 100
+
 typedef struct {
-	char operation [15];
-	char operand1  [50];
-	char operand2  [50];
-	char operand3  [50];
+	char operation[OPERATION_SIZE];
+	char operand1[OPERAND_SIZE];
+	char operand2[OPERAND_SIZE];
+	char operand3[OPERAND_SIZE];
 } ASMOP;
 
 #endif /* INCLUDE_ASMOP_H_ */

@@ -1,14 +1,18 @@
 src/parser.o: ../src/parser.c ../src/../include/parser.h \
  ../src/../include/../include/tokens.h \
- ../src/../include/../include/statements.h ../src/../include/utils.h \
+ ../src/../include/../include/statements.h \
+ ../src/../include/../include/asmop.h ../src/../include/utils.h \
  ../src/../include/functions.h ../src/../include/asmop.h \
- ../src/../include/tokens.h
+ ../src/../include/tokens.h ../src/../include/../include/types.h \
+ ../src/../include/errors.h
 
 ../src/../include/parser.h:
 
 ../src/../include/../include/tokens.h:
 
 ../src/../include/../include/statements.h:
+
+../src/../include/../include/asmop.h:
 
 ../src/../include/utils.h:
 
@@ -17,3 +21,7 @@ src/parser.o: ../src/parser.c ../src/../include/parser.h \
 ../src/../include/asmop.h:
 
 ../src/../include/tokens.h:
+
+../src/../include/../include/types.h:
+
+../src/../include/errors.h:

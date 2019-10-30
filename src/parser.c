@@ -8,12 +8,13 @@
 #include "../include/parser.h"
 #include "../include/utils.h"
 #include "../include/functions.h"
+#include "../include/errors.h"
 
 void Parse(FILE *f, COMPILER_INTERNAL *internal_state) {
-	internal_state->TOKEN_PTR = internal_state->STATEMENT_POINTER = 0;
+	internal_state->TOKEN_PTR = internal_state->STATEMENT_POINTER =
+			internal_state->STATEMENT_DATA_PTR = 0;
 	size_t characters_read = fread(internal_state->text_read, sizeof(char),
 	TEXT_READ_SIZE, f);
-	printf("read %ld characters\n", characters_read);
 	internal_state->CHARACTERS_READ = characters_read;
 	internal_state->FILE_PTR = internal_state->text_read;
 	internal_state->DATA_PTR = internal_state->data_for_tokens;
@@ -21,14 +22,6 @@ void Parse(FILE *f, COMPILER_INTERNAL *internal_state) {
 	do {
 		GetNextToken(internal_state, &t);
 		internal_state->tokens[internal_state->TOKEN_PTR++] = t;
-		if (t.type != IDENTIFIER_TOKEN && t.type != NUMBER_TOKEN)
-			printf("%d\n", t.type);
-		else {
-			if (t.type == IDENTIFIER_TOKEN)
-				printf("%d %s\n", t.type, (char*) t.data);
-			else if (t.type == NUMBER_TOKEN)
-				printf("%d %lld\n", t.type, *(long long*) t.data);
-		}
 	} while (t.type != FILE_END_TOKEN);
 	internal_state->TOKEN_PTR = 0;
 	Statement statement;
@@ -100,6 +93,11 @@ void GetNextToken(COMPILER_INTERNAL *state, Token *token) {
 	}
 	if (starts_with(ptr, "=")) {
 		*token = Make_nodata_Token(ASSIGNMENT_TOKEN);
+		state->FILE_PTR = ptr + 1;
+		return;
+	}
+	if (starts_with(ptr, ",")) {
+		*token = Make_nodata_Token(COMMA_TOKEN);
 		state->FILE_PTR = ptr + 1;
 		return;
 	}
@@ -180,6 +178,20 @@ void GetNextStatement(COMPILER_INTERNAL *state, Statement *statement) {
 			if (found == 0) {
 				fprintf(stderr, "Function '%s' not found\n",
 						(const char*) state->tokens[state->TOKEN_PTR].data);
+				error(FUNCTION_NOT_FOUND);
+				return;
+			} else {
+				statement->type = FUNCTION_CALL_STATEMENT;
+				long long *allocated_mem = (long long*) (state->statement_data
+						+ state->STATEMENT_DATA_PTR);
+				allocated_mem[0] = (long long) f.generate_assembly;
+				allocated_mem[1] = (long long) (state->tokens
+						+ ++(state->TOKEN_PTR));
+				statement->data = allocated_mem;
+				state->STATEMENT_DATA_PTR += 2 * sizeof(long long);
+				while (state->tokens[state->TOKEN_PTR].type != NEW_LINE_TOKEN)
+					state->TOKEN_PTR++;
+				return;
 			}
 		}
 	}
@@ -187,4 +199,23 @@ void GetNextStatement(COMPILER_INTERNAL *state, Statement *statement) {
 			state->tokens[state->TOKEN_PTR].type,
 			(char*) state->tokens[state->TOKEN_PTR].data);
 	state->TOKEN_PTR++;
+}
+
+void Write(FILE *f, COMPILER_INTERNAL *internal_state) {
+	fprintf(f, ".globl _start\n_start:\n");
+	for (int i = 0; i < internal_state->asmop_memptr; i++) {
+		ASMOP *op = internal_state->asmop_mem + i;
+		fprintf(f, "\t%s", op->operation);
+		if (op->operand1[0] != '\0') {
+			fprintf(f, " %s", op->operand1);
+			if (op->operand2[0] != '\0') {
+				fprintf(f, ", %s", op->operand2);
+				if (op->operand3[0] != '\0') {
+					fprintf(f, ", %s", op->operand3);
+				}
+			}
+		}
+		fprintf(f, "\n");
+	}
+	fprintf(f, "\tmovq $0, %%rax\n\tcallq _pseudo_lib_exit@PLT\n");
 }
