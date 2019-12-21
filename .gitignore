@@ -1,0 +1,9 @@
+/test
+/test.s
+/.project
+/.cproject
+/.settings/
+/.vscode/
+/bin/*
+/compile/*
+/lib/stdlib.o

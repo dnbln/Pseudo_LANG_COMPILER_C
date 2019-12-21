@@ -41,11 +41,11 @@ typedef struct {
 	ASMOP asmop_mem[ASMOP_MEMORY];
 } COMPILER_INTERNAL;
 
-void Parse(FILE*, COMPILER_INTERNAL*);
+void Parse(FILE*, COMPILER_INTERNAL*, int*);
 
-void GetNextToken(COMPILER_INTERNAL*, Token*);
+void GetNextToken(COMPILER_INTERNAL*, Token*, int*, int*);
 
-void GetNextStatement(COMPILER_INTERNAL*, Statement*);
+void GetNextStatement(COMPILER_INTERNAL*, Statement*, int*);
 
 // Write out the generated assembly
 void Write(FILE*, COMPILER_INTERNAL*);

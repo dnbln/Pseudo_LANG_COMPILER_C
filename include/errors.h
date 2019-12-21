@@ -1,15 +1,44 @@
 /*
- * errors.h
+ * errorcodes.h
  *
- *  Created on: Oct 24, 2019
+ *  Created on: Oct 20, 2019
  *      Author: dinu
  */
 
-#ifndef INCLUDE_ERRORS_H_
-#define INCLUDE_ERRORS_H_
+#ifndef INCLUDE_ERRORCODES_H_
+#define INCLUDE_ERRORCODES_H_
 
-#define FUNCTION_NOT_FOUND 0x1
+#include <stdio.h>
 
-void error(int errno);
+#define COMPILATION_SUCCESSFULL 0
+#define COULD_NOT_OPEN_FILE 1
+#define NO_FILES_GIVEN 2
+#define COMPILATION_FAILED 3
+#define FUNCTION_NOT_FOUND 4
+#define STRING_NOT_ENDED 5
 
-#endif /* INCLUDE_ERRORS_H_ */
+typedef struct {
+	unsigned int code;
+	unsigned int line;
+} WARNING;
+
+void load_warning(WARNING);
+
+typedef struct {
+	unsigned int code;
+	unsigned long long int line;
+	char* extra;
+} ERROR;
+
+void load_error(ERROR);
+
+void print_warnings(FILE*);
+void print_errors(FILE*);
+
+void compiler_perror(FILE*,ERROR);
+void compiler_pwarning(FILE*, WARNING);
+
+char* getWarnMessage(int code);
+char* getErrorMessage(int code);
+
+#endif /* INCLUDE_ERRORCODES_H_ */

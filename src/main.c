@@ -8,7 +8,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "../include/parser.h"
-#include "../include/errorcodes.h"
+#include "../include/errors.h"
 #include "../include/utils.h"
 #include "../include/functions.h"
 #include "../include/compiler.h"
@@ -43,12 +43,14 @@ int main(int argc, char **argv) {
 	}
 	Init_Utils();
 	Init_Functions(&compiler_varname, &compiler_value_instructions);
-	Parse(f, &internal_state);
+	int success = 1;
+	Parse(f, &internal_state, &success);
 	fclose(f);
-	int success;
-	Compile(&internal_state, &success);
+	if (success)
+		Compile(&internal_state, &success);
 	if (success) {
 		f = fopen(assembly_file, "w");
+		print_warnings(stdout);
 		Write(f, &internal_state);
 		return COMPILATION_SUCCESSFULL;
 	} else {

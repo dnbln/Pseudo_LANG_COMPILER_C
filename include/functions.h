@@ -19,7 +19,7 @@ typedef struct {
 	ASM_FUNC_GENERATE *generate_assembly;
 } Function;
 
-#define STREAM_REGISTER "%r15w"
+#define STREAM_REGISTER "%r15"
 
 void GetFunction(const char *name, Function *f, int *found);
 
