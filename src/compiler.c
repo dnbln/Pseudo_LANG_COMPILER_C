@@ -194,7 +194,7 @@ void make_signature(unsigned long long op, int op_class, TYPE type1, TYPE type2,
 		else if (type2.typeid == STRING_TYPE)
 			strcat(sig, ",String>");
 		else if (type2.typeid == ERROR_TYPE)
-			strcat(sig, ",String>");
+			strcat(sig, ",Error>");
 		else if (type2.typeid == VOID_TYPE)
 			strcat(sig, ",Void>");
 	}
