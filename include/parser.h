@@ -45,7 +45,7 @@ void Parse(FILE*, COMPILER_INTERNAL*, int*);
 
 void GetNextToken(COMPILER_INTERNAL*, Token*, int*, int*);
 
-void GetNextStatement(COMPILER_INTERNAL*, Statement*, int*);
+void GetNextStatement(COMPILER_INTERNAL*, Statement*, int*, int*);
 
 // Write out the generated assembly
 void Write(FILE*, COMPILER_INTERNAL*);

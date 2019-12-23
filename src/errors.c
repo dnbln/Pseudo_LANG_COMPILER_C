@@ -6,6 +6,7 @@
  */
 
 #include "../include/errors.h"
+#include <stdlib.h>
 
 #define MAX_ERRORS 10000
 #define MAX_WARNINGS 10000
@@ -16,7 +17,7 @@ ERROR errors[MAX_ERRORS];
 WARNING warnings[MAX_WARNINGS];
 
 char WarnMessages[][64] = {"", "", "", ""};
-char ErrorMessages[][64] = {"", "", "", "", "FUNCTION_NOT_FOUND", "STRING_NOT_ENDED"};
+char ErrorMessages[][64] = {"", "", "", "", "FUNCTION NOT FOUND", "STRING NOT ENDED", "OPERATOR NOT FOUND", "UNKNOWN STATEMENT TYPE"};
 
 void load_error(ERROR err)
 {
@@ -49,9 +50,9 @@ void print_warnings(FILE *f)
 void compiler_perror(FILE *f, ERROR e)
 {
 	if (e.extra == NULL)
-		fprintf(f, "Error: %d\n%s on line %lld\n", e.code, getErrorMessage(e.code), e.line);
+		fprintf(f, "Error: %s\nOn line %lld\n", getErrorMessage(e.code), e.line);
 	else
-		fprintf(f, "Error: %d\n%s:'%s' on line %lld\n", e.code, getErrorMessage(e.code), e.extra, e.line);
+		fprintf(f, "Error: %s\n'%s' on line %lld\n", getErrorMessage(e.code), e.extra, e.line);
 }
 
 void compiler_pwarning(FILE *f, WARNING w)
@@ -67,4 +68,11 @@ char *getWarnMessage(int code)
 char *getErrorMessage(int code)
 {
 	return ErrorMessages[code];
+}
+
+void clear_errors(){
+	for(size_t i = 0; i < error_count; i++){
+		if(errors[i].clear)
+			free(errors[i].extra);
+	}
 }

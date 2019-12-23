@@ -17,6 +17,7 @@
 
 typedef struct {
 	int type;
+	int line;
 	void *data; // some data about this statement
 } Statement;
 

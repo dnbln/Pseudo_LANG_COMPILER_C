@@ -79,13 +79,4 @@ _load_strlen_to_rbx.l2:
 .type digits, @object
 .align 16
 digits:
-	.byte 48
-	.byte 49
-	.byte 50
-	.byte 51
-	.byte 52
-	.byte 53
-	.byte 54
-	.byte 55
-	.byte 56
-	.byte 57
+	.ascii "0123456789"

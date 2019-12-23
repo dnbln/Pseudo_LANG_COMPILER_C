@@ -32,4 +32,6 @@ void Init_Utils();
 
 char* num_to_str(long long, char*);
 
+long long compute_length(char*);
+
 #endif /* INCLUDE_UTILS_H_ */

@@ -11,15 +11,7 @@
 #include "parser.h"
 #include "statements.h"
 #include "types.h"
-
-typedef TYPE OPERATOR_CALL(Token a, Token b, ASMOP* memory, int* ptr, int* success);
-
-typedef struct {
-	int a1_type;//arg 1 type
-	int a2_type;//arg 2 type (if any)
-	int op; // operation id
-	OPERATOR_CALL* call;
-} OPERATOR;
+#include "cache.h"
 
 typedef struct {
 	char strings[8192][4096];
@@ -35,7 +27,7 @@ TYPE compiler_value_instructions(Token*, int, ASMOP*, int*, int*);
 
 char* compiler_varname(const char *identifier_name);
 
-TYPE callOperator(Token a, int op, Token b, ASMOP* memory, int* ptr, int* success);
+TYPE callOperator(CACHE_PTR a, unsigned long long int op, int op_class, TYPE b, ASMOP* memory, int* ptr, int* success);
 
 char* compiler_loadString(const char *stringVal);
 
@@ -46,5 +38,15 @@ char* compiler_addString(const char *stringVal);
 void compiler_init();
 
 void compiler_writeDataAndVariables(FILE* f);
+
+CACHE_PTR save_result(TYPE, ASMOP*, int*, int*);
+
+#define CACHE_SIZE 16384
+
+void cache_init();
+
+void cache_clear();
+
+int compiler_getLine();
 
 #endif /* INCLUDE_COMPILER_H_ */

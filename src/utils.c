@@ -58,3 +58,15 @@ char* num_to_str(long long x, char *str) {
 	str[ptr] = '\0';
 	return str;
 }
+
+
+long long compute_length(char* s){
+	long long t = 0;
+	for(int i = 0; s[i] != '\0'; i++){
+		t++;
+		if (s[i] == '\\'){
+			i++;
+		}
+	}
+	return t;
+}

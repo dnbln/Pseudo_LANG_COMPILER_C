@@ -2,7 +2,7 @@
 
 CC=gcc
 CC_OPTS=-Wall
-OBJ_FILES=compile/main.o compile/compiler.o compile/errors.o compile/functions.o compile/parser.o compile/tokens.o compile/utils.o
+OBJ_FILES=compile/main.o compile/compiler.o compile/errors.o compile/functions.o compile/parser.o compile/tokens.o compile/utils.o compile/operators.o
 
 all: bin/binary
 

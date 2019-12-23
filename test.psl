@@ -1,1 +1,9 @@
-print 1
+begin
+    print 1-1, "\n"
+    begin
+        print 1-0, "\n"
+        begin
+            print 1+1, "\n"
+        end
+    end
+end

@@ -33,9 +33,10 @@ void Parse(FILE *f, COMPILER_INTERNAL *internal_state, int *success)
 		return;
 	internal_state->TOKEN_PTR = 0;
 	Statement statement;
+	line = 1;
 	do
 	{
-		GetNextStatement(internal_state, &statement, success);
+		GetNextStatement(internal_state, &statement, &line, success);
 		internal_state->statements[internal_state->STATEMENT_POINTER++] =
 			statement;
 	} while (statement.type != NO_STATEMENT && (*success));
@@ -107,10 +108,40 @@ void GetNextToken(COMPILER_INTERNAL *state, Token *token, int *line, int* succes
 		state->FILE_PTR = ptr + 1;
 		return;
 	}
+	if(starts_with(ptr, "==")){
+		*token = Make_data_Token(EQUALITY_OP_TOKEN, (void *) EQ);
+		state->FILE_PTR = ptr + 2;
+		return;
+	}
+	if(starts_with(ptr, "!=")){
+		*token = Make_data_Token(EQUALITY_OP_TOKEN, (void *) NEQ);
+		state->FILE_PTR = ptr + 2;
+		return;
+	}
+	if(starts_with(ptr, "<=")){
+		*token = Make_data_Token(EQUALITY_OP_TOKEN, (void *) LEQ);
+		state->FILE_PTR = ptr + 2;
+		return;
+	}
+	if(starts_with(ptr, ">=")){
+		*token = Make_data_Token(EQUALITY_OP_TOKEN, (void *) GEQ);
+		state->FILE_PTR = ptr + 2;
+		return;
+	}
 	if (starts_with(ptr, "<-"))
 	{
 		*token = Make_nodata_Token(ASSIGNMENT_TOKEN);
 		state->FILE_PTR = ptr + 2;
+		return;
+	}
+	if(starts_with(ptr, "<")){
+		*token = Make_data_Token(EQUALITY_OP_TOKEN, (void *) L);
+		state->FILE_PTR = ptr + 1;
+		return;
+	}
+	if(starts_with(ptr, ">")){
+		*token = Make_data_Token(EQUALITY_OP_TOKEN, (void *) G);
+		state->FILE_PTR = ptr + 1;
 		return;
 	}
 	if (starts_with(ptr, "="))
@@ -153,6 +184,8 @@ void GetNextToken(COMPILER_INTERNAL *state, Token *token, int *line, int* succes
 			ERROR err;
 			err.code = STRING_NOT_ENDED;
 			err.extra = NULL;
+			err.line = *line;
+			err.clear = 0;
 			load_error(err);
 			(*success) = 0;
 			return;
@@ -160,7 +193,7 @@ void GetNextToken(COMPILER_INTERNAL *state, Token *token, int *line, int* succes
 		state->FILE_PTR = ptr + 1;
 		int size = ptr - startptr;
 		strncpy(state->DATA_PTR, startptr, size);
-		*token = Make_data_Token(STRING_TYPE, state->DATA_PTR);
+		*token = Make_data_Token(STRING_TOKEN, state->DATA_PTR);
 		state->DATA_PTR += size + 1;
 	}
 	if (starts_class(ptr, DIGIT_CLASS))
@@ -193,10 +226,10 @@ void GetNextToken(COMPILER_INTERNAL *state, Token *token, int *line, int* succes
 	}
 }
 
-void GetNextStatement(COMPILER_INTERNAL *state, Statement *statement, int* success)
+void GetNextStatement(COMPILER_INTERNAL *state, Statement *statement, int *line, int* success)
 {
 	while (state->tokens[state->TOKEN_PTR].type == NEW_LINE_TOKEN)
-		state->TOKEN_PTR++;
+		state->TOKEN_PTR++, (*line)++;
 	if (state->tokens[state->TOKEN_PTR].type == FILE_END_TOKEN)
 	{
 		statement->type = NO_STATEMENT;
@@ -215,7 +248,7 @@ void GetNextStatement(COMPILER_INTERNAL *state, Statement *statement, int* succe
 		unsigned int count = 0;
 		while (state->tokens[state->TOKEN_PTR].type != END_TOKEN)
 		{
-			GetNextStatement(state, &s, success);
+			GetNextStatement(state, &s, line, success);
 			state->inside_composite_statements[state->INSIDE_COMPOSITE_STATEMENT_POINTER] =
 				s;
 			state->composite_statements[COMPOSITE_STATEMENT_ID].statements[count] =
@@ -223,13 +256,14 @@ void GetNextStatement(COMPILER_INTERNAL *state, Statement *statement, int* succe
 			(state->INSIDE_COMPOSITE_STATEMENT_POINTER)++;
 			count++;
 			while (state->tokens[state->TOKEN_PTR].type == NEW_LINE_TOKEN)
-				state->TOKEN_PTR++;
+				state->TOKEN_PTR++, (*line)++;
 		}
 		state->composite_statements[COMPOSITE_STATEMENT_ID].inside_statements_count =
 			count;
 		state->TOKEN_PTR++;
 		return;
 	}
+	statement->line = *line;
 	if (state->tokens[state->TOKEN_PTR].type == IDENTIFIER_TOKEN)
 	{
 		if (state->tokens[state->TOKEN_PTR + 1].type == ASSIGNMENT_TOKEN)
@@ -254,6 +288,7 @@ void GetNextStatement(COMPILER_INTERNAL *state, Statement *statement, int* succe
 				ERROR err;
 				err.code = FUNCTION_NOT_FOUND;
 				err.extra = (char *)state->tokens[state->TOKEN_PTR].data;
+				err.clear = 0;
 				while (state->tokens[state->TOKEN_PTR].type != NEW_LINE_TOKEN)
 					state->TOKEN_PTR++;
 				err.line = (unsigned long long)state->tokens[state->TOKEN_PTR].data;

@@ -46,8 +46,10 @@ int main(int argc, char **argv) {
 	int success = 1;
 	Parse(f, &internal_state, &success);
 	fclose(f);
-	if (success)
+	if (success){
+		compiler_init();
 		Compile(&internal_state, &success);
+	}
 	if (success) {
 		f = fopen(assembly_file, "w");
 		print_warnings(stdout);
@@ -56,6 +58,7 @@ int main(int argc, char **argv) {
 	} else {
 		print_warnings(stdout);
 		print_errors(stderr);
+		clear_errors();
 		return COMPILATION_FAILED;
 	}
 }

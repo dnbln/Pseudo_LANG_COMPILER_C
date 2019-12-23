@@ -44,7 +44,7 @@ void Init_Functions(char *(*varname)(const char *identifier_name),
 	value_instructions = v_instructions;
 }
 
-void print_num_handler(Token *t, ASMOP *memory, int *ptr, int *success)
+void print_num_handler(ASMOP *memory, int *ptr, int *success)
 {
 	strcpy(memory[*ptr].operation, "callq");
 	strcpy(memory[*ptr].operand1, "_print_number@PLT");
@@ -52,7 +52,7 @@ void print_num_handler(Token *t, ASMOP *memory, int *ptr, int *success)
 	(*ptr)++;
 }
 
-void print_str_handler(Token *t, ASMOP *memory, int *ptr, int *success)
+void print_str_handler(ASMOP *memory, int *ptr, int *success)
 {
 	strcpy(memory[*ptr].operation, "callq");
 	strcpy(memory[*ptr].operand1, "_load_strlen_to_rbx@PLT");
@@ -99,12 +99,12 @@ ASMOP *print_generate_assembly(Token *t, ASMOP *memory, int *ptr, int *success)
 			if (type.typeid == NUMBER_TYPE)
 			{
 				// movq %rax, %rax # does nothing
-				print_num_handler(t, memory, ptr, success);
+				print_num_handler(memory, ptr, success);
 			}
 			else if (type.typeid == STRING_TYPE)
 			{
 				// movq %rax, %rax # does nothing
-				print_str_handler(t, memory, ptr, success);
+				print_str_handler(memory, ptr, success);
 			}
 		}
 	}
@@ -114,12 +114,12 @@ ASMOP *print_generate_assembly(Token *t, ASMOP *memory, int *ptr, int *success)
 	if (type.typeid == NUMBER_TYPE)
 	{
 		// movq %rax, %rax # does nothing
-		print_num_handler(t, memory, ptr, success);
+		print_num_handler(memory, ptr, success);
 	}
 	else if (type.typeid == STRING_TYPE)
 	{
 		// movq %rax, %rax # does nothing
-		print_str_handler(t, memory, ptr, success);
+		print_str_handler(memory, ptr, success);
 	}
 
 	return memory;

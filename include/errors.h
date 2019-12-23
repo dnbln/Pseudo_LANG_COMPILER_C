@@ -16,6 +16,8 @@
 #define COMPILATION_FAILED 3
 #define FUNCTION_NOT_FOUND 4
 #define STRING_NOT_ENDED 5
+#define OPERATOR_NOT_FOUND 6
+#define UNKNOWN_STATEMENT_TYPE 7
 
 typedef struct {
 	unsigned int code;
@@ -28,6 +30,7 @@ typedef struct {
 	unsigned int code;
 	unsigned long long int line;
 	char* extra;
+	unsigned clear;
 } ERROR;
 
 void load_error(ERROR);
@@ -40,5 +43,7 @@ void compiler_pwarning(FILE*, WARNING);
 
 char* getWarnMessage(int code);
 char* getErrorMessage(int code);
+
+void clear_errors();
 
 #endif /* INCLUDE_ERRORCODES_H_ */

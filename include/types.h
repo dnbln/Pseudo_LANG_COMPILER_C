@@ -12,6 +12,7 @@
 #define NUMBER_TYPE 1ULL
 #define STRING_TYPE 2ULL
 #define CHAR_TYPE 3ULL
+#define ERROR_TYPE 4ULL
 
 typedef struct {
 	unsigned long long int typeid;
