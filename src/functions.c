@@ -55,10 +55,6 @@ void print_num_handler(ASMOP *memory, int *ptr, int *success)
 void print_str_handler(ASMOP *memory, int *ptr, int *success)
 {
 	strcpy(memory[*ptr].operation, "callq");
-	strcpy(memory[*ptr].operand1, "_load_strlen_to_rbx@PLT");
-	memory[*ptr].operand2[0] = '\0';
-	(*ptr)++;
-	strcpy(memory[*ptr].operation, "callq");
 	strcpy(memory[*ptr].operand1, "_print_string@PLT");
 	memory[*ptr].operand2[0] = '\0';
 	(*ptr)++;

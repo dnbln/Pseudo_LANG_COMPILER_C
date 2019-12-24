@@ -16,6 +16,7 @@
 
 typedef struct {
 	unsigned long long int typeid;
+	void *saved;
 } TYPE;
 
 #endif /* INCLUDE_TYPES_H_ */

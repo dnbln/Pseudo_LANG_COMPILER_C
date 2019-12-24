@@ -29,7 +29,7 @@ void Parse(FILE *f, COMPILER_INTERNAL *internal_state, int *success)
 		GetNextToken(internal_state, &t, &line, success);
 		internal_state->tokens[internal_state->TOKEN_PTR++] = t;
 	} while (t.type != FILE_END_TOKEN && (*success));
-	if(*success == 0)
+	if (*success == 0)
 		return;
 	internal_state->TOKEN_PTR = 0;
 	Statement statement;
@@ -42,7 +42,7 @@ void Parse(FILE *f, COMPILER_INTERNAL *internal_state, int *success)
 	} while (statement.type != NO_STATEMENT && (*success));
 }
 
-void GetNextToken(COMPILER_INTERNAL *state, Token *token, int *line, int* success)
+void GetNextToken(COMPILER_INTERNAL *state, Token *token, int *line, int *success)
 {
 	char *ptr = state->FILE_PTR;
 	while (is_whitespace(*ptr))
@@ -67,7 +67,7 @@ void GetNextToken(COMPILER_INTERNAL *state, Token *token, int *line, int* succes
 	}
 	if (starts_with(ptr, "\n"))
 	{
-		*token = Make_data_Token(NEW_LINE_TOKEN, (void *)((unsigned long long) *line));
+		*token = Make_data_Token(NEW_LINE_TOKEN, (void *)((unsigned long long)*line));
 		state->FILE_PTR = ++ptr;
 		(*line)++;
 		return;
@@ -108,23 +108,27 @@ void GetNextToken(COMPILER_INTERNAL *state, Token *token, int *line, int* succes
 		state->FILE_PTR = ptr + 1;
 		return;
 	}
-	if(starts_with(ptr, "==")){
-		*token = Make_data_Token(EQUALITY_OP_TOKEN, (void *) EQ);
+	if (starts_with(ptr, "=="))
+	{
+		*token = Make_data_Token(EQUALITY_OP_TOKEN, (void *)EQ);
 		state->FILE_PTR = ptr + 2;
 		return;
 	}
-	if(starts_with(ptr, "!=")){
-		*token = Make_data_Token(EQUALITY_OP_TOKEN, (void *) NEQ);
+	if (starts_with(ptr, "!="))
+	{
+		*token = Make_data_Token(EQUALITY_OP_TOKEN, (void *)NEQ);
 		state->FILE_PTR = ptr + 2;
 		return;
 	}
-	if(starts_with(ptr, "<=")){
-		*token = Make_data_Token(EQUALITY_OP_TOKEN, (void *) LEQ);
+	if (starts_with(ptr, "<="))
+	{
+		*token = Make_data_Token(EQUALITY_OP_TOKEN, (void *)LEQ);
 		state->FILE_PTR = ptr + 2;
 		return;
 	}
-	if(starts_with(ptr, ">=")){
-		*token = Make_data_Token(EQUALITY_OP_TOKEN, (void *) GEQ);
+	if (starts_with(ptr, ">="))
+	{
+		*token = Make_data_Token(EQUALITY_OP_TOKEN, (void *)GEQ);
 		state->FILE_PTR = ptr + 2;
 		return;
 	}
@@ -134,13 +138,15 @@ void GetNextToken(COMPILER_INTERNAL *state, Token *token, int *line, int* succes
 		state->FILE_PTR = ptr + 2;
 		return;
 	}
-	if(starts_with(ptr, "<")){
-		*token = Make_data_Token(EQUALITY_OP_TOKEN, (void *) L);
+	if (starts_with(ptr, "<"))
+	{
+		*token = Make_data_Token(EQUALITY_OP_TOKEN, (void *)L);
 		state->FILE_PTR = ptr + 1;
 		return;
 	}
-	if(starts_with(ptr, ">")){
-		*token = Make_data_Token(EQUALITY_OP_TOKEN, (void *) G);
+	if (starts_with(ptr, ">"))
+	{
+		*token = Make_data_Token(EQUALITY_OP_TOKEN, (void *)G);
 		state->FILE_PTR = ptr + 1;
 		return;
 	}
@@ -226,7 +232,7 @@ void GetNextToken(COMPILER_INTERNAL *state, Token *token, int *line, int* succes
 	}
 }
 
-void GetNextStatement(COMPILER_INTERNAL *state, Statement *statement, int *line, int* success)
+void GetNextStatement(COMPILER_INTERNAL *state, Statement *statement, int *line, int *success)
 {
 	while (state->tokens[state->TOKEN_PTR].type == NEW_LINE_TOKEN)
 		state->TOKEN_PTR++, (*line)++;

@@ -29,8 +29,8 @@ void Compile_Statement(COMPILER_INTERNAL *internal_state, Statement s,
 					   int *success)
 {
 	const int type = s.type;
-	*success = 1;
 	compiler_line = s.line;
+	cache_clear();
 	if (type == FUNCTION_CALL_STATEMENT)
 	{
 		long long *statement_data = s.data;
@@ -52,6 +52,7 @@ TYPE compiler_value_instructions(Token *t, int n, ASMOP *memory, int *ptr,
 								 int *success)
 {
 	TYPE type;
+	type.saved = NULL;
 	type.typeid = VOID_TYPE;
 	if (n == 0)
 	{
@@ -112,19 +113,45 @@ TYPE compiler_value_instructions(Token *t, int n, ASMOP *memory, int *ptr,
 						break;
 				}
 			}
+			if (t[i].data != NULL)
+			{
+				if (i == 0 && j == n - 1)
+				{
+					CACHE_PTR cache = t[i].data;
+					strcpy(memory[*ptr].operation, "movq");
+					strcpy(memory[*ptr].operand1, "CACHE_MEM+");
+					num_to_str(cache->cache_index, memory[*ptr].operand1 + 10);
+					strcpy(memory[*ptr].operand2, "%rax");
+					memory[*ptr].operand3[0] = '\0';
+					(*ptr)++;
+					return cache->data_type;
+				}
+				i = j;
+				continue;
+			}
 			int len = j - i - 1;
 			TYPE parenthesis_result_type = compiler_value_instructions(t + i + 1, len, memory, ptr, success);
-			t[i].data = &t[j];
+			CACHE_PTR retptr = save_result(&parenthesis_result_type, memory, ptr, success);
+			t[i].data = retptr;
 			t[j].data = &t[i];
-			t[i].extra_data = t[j].extra_data = save_result(parenthesis_result_type, memory, ptr, success);
-			i = j + 1;
+			if (i == 0 && j == n - 1)
+			{
+				return parenthesis_result_type;
+			}
+			i = j;
 		}
 	}
 	for (int i = n - 1; i >= 0; i--)
 	{
+		if (t[i].type == P_CLOSED_TOKEN)
+		{
+			i = ((Token *)t[i].data) - t + 1;
+			continue;
+		}
 		if (t[i].type == LOGIC_OP_TOKEN)
 		{
-			CACHE_PTR left = save_result(compiler_value_instructions(t, i, memory, ptr, success), memory, ptr, success);
+			TYPE left_type = compiler_value_instructions(t, i, memory, ptr, success);
+			CACHE_PTR left = save_result(&left_type, memory, ptr, success);
 			TYPE right = compiler_value_instructions(t + i + 1, n - i - 1, memory, ptr, success);
 			TYPE result = callOperator(left, (unsigned long long)t[i].data, t[i].type, right, memory, ptr, success);
 			return result;
@@ -132,9 +159,15 @@ TYPE compiler_value_instructions(Token *t, int n, ASMOP *memory, int *ptr,
 	}
 	for (int i = n - 1; i >= 0; i--)
 	{
+		if (t[i].type == P_CLOSED_TOKEN)
+		{
+			i = ((Token *)t[i].data) - t + 1;
+			continue;
+		}
 		if (t[i].type == EQUALITY_OP_TOKEN)
 		{
-			CACHE_PTR left = save_result(compiler_value_instructions(t, i, memory, ptr, success), memory, ptr, success);
+			TYPE left_type = compiler_value_instructions(t, i, memory, ptr, success);
+			CACHE_PTR left = save_result(&left_type, memory, ptr, success);
 			TYPE right = compiler_value_instructions(t + i + 1, n - i - 1, memory, ptr, success);
 			TYPE result = callOperator(left, (unsigned long long)t[i].data, t[i].type, right, memory, ptr, success);
 			return result;
@@ -142,9 +175,15 @@ TYPE compiler_value_instructions(Token *t, int n, ASMOP *memory, int *ptr,
 	}
 	for (int i = n - 1; i >= 0; i--)
 	{
+		if (t[i].type == P_CLOSED_TOKEN)
+		{
+			i = ((Token *)t[i].data) - t + 1;
+			continue;
+		}
 		if (t[i].type == ARITH_OP_TOKEN && ((unsigned long long int)t[i].data == ADD || (unsigned long long int)t[i].data == SUBTRACT))
 		{
-			CACHE_PTR left = save_result(compiler_value_instructions(t, i, memory, ptr, success), memory, ptr, success);
+			TYPE left_type = compiler_value_instructions(t, i, memory, ptr, success);
+			CACHE_PTR left = save_result(&left_type, memory, ptr, success);
 			TYPE right = compiler_value_instructions(t + i + 1, n - i - 1, memory, ptr, success);
 			TYPE result = callOperator(left, (unsigned long long)t[i].data, t[i].type, right, memory, ptr, success);
 			return result;
@@ -152,9 +191,15 @@ TYPE compiler_value_instructions(Token *t, int n, ASMOP *memory, int *ptr,
 	}
 	for (int i = n - 1; i >= 0; i--)
 	{
+		if (t[i].type == P_CLOSED_TOKEN)
+		{
+			i = ((Token *)t[i].data) - t + 1;
+			continue;
+		}
 		if (t[i].type == ARITH_OP_TOKEN && ((unsigned long long int)t[i].data == MULTIPLY || (unsigned long long int)t[i].data == DIVIDE))
 		{
-			CACHE_PTR left = save_result(compiler_value_instructions(t, i, memory, ptr, success), memory, ptr, success);
+			TYPE left_type = compiler_value_instructions(t, i, memory, ptr, success);
+			CACHE_PTR left = save_result(&left_type, memory, ptr, success);
 			TYPE right = compiler_value_instructions(t + i + 1, n - i - 1, memory, ptr, success);
 			TYPE result = callOperator(left, (unsigned long long)t[i].data, t[i].type, right, memory, ptr, success);
 			return result;
@@ -175,6 +220,9 @@ void make_signature(unsigned long long op, int op_class, TYPE type1, TYPE type2,
 			break;
 		case SUBTRACT:
 			strcpy(sig, "subtract");
+			break;
+		case MULTIPLY:
+			strcpy(sig, "multiply");
 			break;
 		default:
 			break;
@@ -202,7 +250,7 @@ void make_signature(unsigned long long op, int op_class, TYPE type1, TYPE type2,
 
 TYPE callOperator(CACHE_PTR a, unsigned long long op, int op_class, TYPE b, ASMOP *memory, int *ptr, int *success)
 {
-	char sig[64];
+	char sig[64] = {};
 	make_signature(op, op_class, a->data_type, b, sig);
 	OPERATOR *opr = getOperator(sig);
 	if (opr == NULL)
@@ -212,11 +260,12 @@ TYPE callOperator(CACHE_PTR a, unsigned long long op, int op_class, TYPE b, ASMO
 		err.line = compiler_getLine();
 		err.extra = malloc(64 * sizeof(char));
 		err.clear = 1;
-		strcpy((char*) err.extra, sig);
+		strcpy((char *)err.extra, sig);
 		load_error(err);
 		*success = 0;
 		TYPE t;
 		t.typeid = ERROR_TYPE;
+		t.saved = NULL;
 		return t;
 	}
 	return opr->call(a, b, memory, ptr, success);
@@ -290,6 +339,11 @@ void cache_clear()
 	cache_offset = 0U;
 }
 
+void cache_delete()
+{
+	free(base);
+}
+
 void compiler_writeDataAndVariables(FILE *f)
 {
 	if (string_list.string_count)
@@ -303,9 +357,11 @@ void compiler_writeDataAndVariables(FILE *f)
 	fprintf(f, ".section .bss\n\t.lcomm CACHE_MEM, 524288\n");
 }
 
-CACHE_PTR save_result(TYPE result_type, ASMOP *memory, int *ptr, int *success)
+CACHE_PTR save_result(TYPE *result_type, ASMOP *memory, int *ptr, int *success)
 {
-	if (result_type.typeid == NUMBER_TYPE)
+	if(result_type->saved != NULL)
+		return result_type->saved;
+	if (result_type->typeid == NUMBER_TYPE)
 	{
 		strcpy(memory[*ptr].operation, "movq");
 		strcpy(memory[*ptr].operand1, "%rax");
@@ -315,11 +371,14 @@ CACHE_PTR save_result(TYPE result_type, ASMOP *memory, int *ptr, int *success)
 		(*ptr)++;
 
 		current->cache_index = cache_offset;
-		current->data_type = result_type;
+		result_type->saved = (void *)current;
+		current->data_type = *result_type;
 		cache_offset += 8;
-		return current++;
+		CACHE_PTR ret = current;
+		current++;
+		return ret;
 	}
-	else if (result_type.typeid == STRING_TYPE)
+	else if (result_type->typeid == STRING_TYPE)
 	{
 		strcpy(memory[*ptr].operation, "movq");
 		strcpy(memory[*ptr].operand1, "%rax");
@@ -341,11 +400,23 @@ CACHE_PTR save_result(TYPE result_type, ASMOP *memory, int *ptr, int *success)
 		(*ptr)++;
 
 		current->cache_index = cache_offset;
-		current->data_type = result_type;
+		result_type->saved = (void *)current;
+		current->data_type = *result_type;
 		cache_offset += 16;
-		return current++;
+		CACHE_PTR ret = current;
+		current++;
+		return ret;
 	}
-	return NULL;
+	else if (result_type->typeid == VOID_TYPE)
+	{
+		result_type->saved = (void *)current;
+		current->data_type = *result_type;
+		current->cache_index = -1;
+		CACHE_PTR ret = current;
+		current++;
+		return ret;
+	}
+	return current++;
 }
 
 int compiler_getLine()

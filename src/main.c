@@ -46,9 +46,10 @@ int main(int argc, char **argv) {
 	int success = 1;
 	Parse(f, &internal_state, &success);
 	fclose(f);
+	compiler_init();
 	if (success){
-		compiler_init();
 		Compile(&internal_state, &success);
+		cache_delete();
 	}
 	if (success) {
 		f = fopen(assembly_file, "w");

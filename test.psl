@@ -1,9 +1,3 @@
 begin
-    print 1-1, "\n"
-    begin
-        print 1-0, "\n"
-        begin
-            print 1+1, "\n"
-        end
-    end
+    print (-11)*(-11+1), "\n"
 end

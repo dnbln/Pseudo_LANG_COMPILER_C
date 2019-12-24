@@ -57,8 +57,6 @@ typedef struct {
 	// data here, if any
 	// this data should be processed according to the type
 	void *data;
-
-	void *extra_data; // for parenthesis
 } Token;
 
 Token Make_nodata_Token(int type); // makes a token that does not contain any data

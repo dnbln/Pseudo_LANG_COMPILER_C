@@ -39,13 +39,15 @@ void compiler_init();
 
 void compiler_writeDataAndVariables(FILE* f);
 
-CACHE_PTR save_result(TYPE, ASMOP*, int*, int*);
+CACHE_PTR save_result(TYPE*, ASMOP*, int*, int*);
 
 #define CACHE_SIZE 16384
 
 void cache_init();
 
 void cache_clear();
+
+void cache_delete();
 
 int compiler_getLine();
 
