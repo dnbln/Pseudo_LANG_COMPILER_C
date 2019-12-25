@@ -1,3 +1,7 @@
 begin
-    print (-11)*(-11+1), "\n"
+    if 0 then
+        print "true", "\n"
+    else
+        print "false", "\n"
+    print 1+0, "\n"
 end

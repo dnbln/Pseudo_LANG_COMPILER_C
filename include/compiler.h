@@ -19,6 +19,10 @@ typedef struct {
 	size_t string_count;
 } STRINGS_LIST;
 
+typedef struct {
+	char label_name[64];
+} LABEL;
+
 void Compile(COMPILER_INTERNAL*, int*);
 
 void Compile_Statement(COMPILER_INTERNAL*, Statement, int*);
@@ -50,5 +54,9 @@ void cache_clear();
 void cache_delete();
 
 int compiler_getLine();
+
+LABEL make_label();
+
+void cond_generate_assembly(COMPILER_INTERNAL *, Conditional_Statement*, ASMOP*, int*, int*);
 
 #endif /* INCLUDE_COMPILER_H_ */

@@ -18,6 +18,7 @@
 #define STRING_NOT_ENDED 5
 #define OPERATOR_NOT_FOUND 6
 #define UNKNOWN_STATEMENT_TYPE 7
+#define EXPECTED_TOKEN_NOT_FOUND 8
 
 typedef struct {
 	unsigned int code;

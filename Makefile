@@ -21,5 +21,11 @@ COMPILE_PRG: bin/binary $(FILE)
 	ld --dynamic-linker /lib64/ld-linux-x86-64.so.2 -L lib -lstd test.o -o test
 	rm test.o
 
+RUN_PRG:
+	LDLP=$$LD_LIBRARY_PATH;\
+	if [[ $$LD_LIBRARY_PATH != "*$$(pwd)/lib/*" ]]; then export LD_LIBRARY_PATH="$$(pwd)/lib/"; fi;\
+	./test;\
+	LD_LIBRARY_PATH=$$LDLP;
+
 clean:
 	rm -f test test.s compile/* bin/binary

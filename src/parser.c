@@ -6,6 +6,7 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
 
 #include "../include/parser.h"
 #include "../include/utils.h"
@@ -82,6 +83,27 @@ void GetNextToken(COMPILER_INTERNAL *state, Token *token, int *line, int *succes
 	{
 		*token = Make_nodata_Token(END_TOKEN);
 		state->FILE_PTR = ptr + 3; //ptr + strlen("end")
+		return;
+	}
+	if (starts_with(ptr, "if"))
+	{
+
+		*token = Make_nodata_Token(IF_TOKEN);
+		state->FILE_PTR = ptr + 2;
+		return;
+	}
+	if (starts_with(ptr, "then"))
+	{
+
+		*token = Make_nodata_Token(THEN_TOKEN);
+		state->FILE_PTR = ptr + 4;
+		return;
+	}
+	if (starts_with(ptr, "else"))
+	{
+
+		*token = Make_nodata_Token(ELSE_TOKEN);
+		state->FILE_PTR = ptr + 4;
 		return;
 	}
 	if (starts_with(ptr, "+"))
@@ -315,6 +337,55 @@ void GetNextStatement(COMPILER_INTERNAL *state, Statement *statement, int *line,
 				return;
 			}
 		}
+	}
+	if (state->tokens[state->TOKEN_PTR].type == IF_TOKEN)
+	{
+		int ptr = state->TOKEN_PTR, start_line = *line;
+		Condition cond;
+		cond.ptr = state->tokens + ptr + 1;
+		while (state->tokens[ptr].type != FILE_END_TOKEN && state->tokens[ptr].type != THEN_TOKEN)
+		{
+			ptr++;
+			if(state->tokens[ptr].type == NEW_LINE_TOKEN){
+				(*line)++;
+			}
+		}
+		if (state->tokens[ptr].type == FILE_END_TOKEN)
+		{
+			ERROR err;
+			err.line = start_line;
+			err.code = EXPECTED_TOKEN_NOT_FOUND;
+			err.extra = (char *)malloc(5 * sizeof(char));
+			strcpy(err.extra, "then");
+			err.clear = 1;
+			load_error(err);
+			*success = 0;
+			return;
+		}
+		cond.tn = state->tokens + ptr - cond.ptr;
+		state->TOKEN_PTR = ++ptr;
+		statement->type = CONDITIONAL_STATEMENT;
+		statement->line = start_line;
+		statement->data = state->conditional_statements_data + state->conditional_statements_ptr;
+		state->conditional_statements_ptr++;
+		Statement onTrue, onFalse;
+		unsigned has_false = 0;
+		GetNextStatement(state, &onTrue, line, success);
+		while(state->tokens[state->TOKEN_PTR].type == NEW_LINE_TOKEN){
+			state->TOKEN_PTR++;
+			(*line)++;
+		}
+		if(state->tokens[state->TOKEN_PTR].type == ELSE_TOKEN){
+			state->TOKEN_PTR++;
+			GetNextStatement(state, &onFalse, line, success);
+			has_false = 1;
+		}
+		((Conditional_Statement*)statement->data)->condition = cond;
+		((Conditional_Statement*)statement->data)->onTrue = onTrue;
+		if(has_false)
+			((Conditional_Statement*)statement->data)->onFalse = onFalse;
+		((Conditional_Statement*)statement->data)->has_false = has_false;
+		return;
 	}
 	printf("Unknown token at beginning of statement %d '%s'\n",
 		   state->tokens[state->TOKEN_PTR].type,

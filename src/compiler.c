@@ -46,6 +46,11 @@ void Compile_Statement(COMPILER_INTERNAL *internal_state, Statement s,
 		for (int i = 0; i < data->inside_statements_count; i++)
 			Compile_Statement(internal_state, *data->statements[i], success);
 	}
+	else if (type == CONDITIONAL_STATEMENT)
+	{
+		Conditional_Statement *statement_data = (Conditional_Statement *)s.data;
+		cond_generate_assembly(internal_state, statement_data, internal_state->asmop_mem, &(internal_state->asmop_memptr), success);
+	}
 }
 
 TYPE compiler_value_instructions(Token *t, int n, ASMOP *memory, int *ptr,
@@ -319,6 +324,7 @@ char *compiler_addString(const char *stringVal)
 CACHE_PTR base;
 CACHE_PTR current;
 size_t cache_offset;
+size_t label_ind;
 
 void compiler_init()
 {
@@ -326,6 +332,7 @@ void compiler_init()
 	cache_init();
 	cache_clear();
 	operators_init();
+	label_ind = 0;
 }
 
 void cache_init()
@@ -359,7 +366,7 @@ void compiler_writeDataAndVariables(FILE *f)
 
 CACHE_PTR save_result(TYPE *result_type, ASMOP *memory, int *ptr, int *success)
 {
-	if(result_type->saved != NULL)
+	if (result_type->saved != NULL)
 		return result_type->saved;
 	if (result_type->typeid == NUMBER_TYPE)
 	{
@@ -407,7 +414,7 @@ CACHE_PTR save_result(TYPE *result_type, ASMOP *memory, int *ptr, int *success)
 		current++;
 		return ret;
 	}
-	else if (result_type->typeid == VOID_TYPE)
+	else if (result_type->typeid == VOID_TYPE || result_type->typeid == ERROR_TYPE)
 	{
 		result_type->saved = (void *)current;
 		current->data_type = *result_type;
@@ -422,4 +429,53 @@ CACHE_PTR save_result(TYPE *result_type, ASMOP *memory, int *ptr, int *success)
 int compiler_getLine()
 {
 	return compiler_line;
+}
+
+LABEL make_label()
+{
+	LABEL l;
+	strcpy(l.label_name, ".l");
+	num_to_str(label_ind, l.label_name + 2);
+	label_ind++;
+	return l;
+}
+
+void cond_generate_assembly(COMPILER_INTERNAL *internal_state, Conditional_Statement *statement, ASMOP *memory, int *ptr, int *success)
+{
+	TYPE t = compiler_value_instructions(statement->condition.ptr, statement->condition.tn, memory, ptr, success);
+	if (*success == 0)
+		return;
+	if (t.typeid != NUMBER_TYPE)
+		return;
+	strcpy(memory[*ptr].operation, "cmpq");
+	strcpy(memory[*ptr].operand1, "$0");
+	strcpy(memory[*ptr].operand2, "%rax");
+	memory[*ptr].operand3[0] = '\0';
+	(*ptr)++;
+	LABEL onFalse = make_label();
+	LABEL end = make_label();
+	strcpy(memory[*ptr].operation, "je");
+	if (statement->has_false)
+		strcpy(memory[*ptr].operand1, onFalse.label_name);
+	else
+		strcpy(memory[*ptr].operand1, end.label_name);
+	memory[*ptr].operand2[0] = '\0';
+	(*ptr)++;
+	Compile_Statement(internal_state, statement->onTrue, success);
+	if (statement->has_false)
+	{
+		strcpy(memory[*ptr].operation, "jmp");
+		strcpy(memory[*ptr].operand1, end.label_name);
+		memory[*ptr].operand2[0] = '\0';
+		(*ptr)++;
+		strcpy(memory[*ptr].operation, onFalse.label_name);
+		strcat(memory[*ptr].operation, ":");
+		memory[*ptr].operand1[0] = '\0';
+		(*ptr)++;
+		Compile_Statement(internal_state, statement->onFalse, success);
+	}
+	strcpy(memory[*ptr].operation, end.label_name);
+	strcat(memory[*ptr].operation, ":");
+	memory[*ptr].operand1[0] = '\0';
+	(*ptr)++;
 }

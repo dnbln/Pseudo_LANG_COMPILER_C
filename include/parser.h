@@ -19,6 +19,7 @@
 #define STATEMENTS 65536
 #define COMPOSITE_STATEMENTS 16384
 #define ASMOP_MEMORY 65536
+#define CONDITIONAL_STATEMENTS 65536
 
 typedef struct {
 	int TOKEN_PTR;
@@ -39,6 +40,9 @@ typedef struct {
 	Statement inside_composite_statements[STATEMENTS];
 	char statement_data[STATEMENTS];
 	ASMOP asmop_mem[ASMOP_MEMORY];
+
+	Conditional_Statement conditional_statements_data[CONDITIONAL_STATEMENTS];
+	size_t conditional_statements_ptr;
 } COMPILER_INTERNAL;
 
 void Parse(FILE*, COMPILER_INTERNAL*, int*);
