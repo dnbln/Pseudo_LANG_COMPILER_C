@@ -19,4 +19,6 @@ typedef struct {
 	void *saved;
 } TYPE;
 
+TYPE makeType();
+
 #endif /* INCLUDE_TYPES_H_ */

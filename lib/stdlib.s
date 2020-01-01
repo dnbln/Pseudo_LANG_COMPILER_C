@@ -12,10 +12,6 @@ _print_char:
 	syscall
 	retq
 
-_NB:
-	mov $-1, %rax
-	jmp _error
-
 .globl _print_number
 _print_number:
 	pushq %rax

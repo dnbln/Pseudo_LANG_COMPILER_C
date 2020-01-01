@@ -63,7 +63,6 @@ void print_str_handler(ASMOP *memory, int *ptr, int *success)
 ASMOP *print_generate_assembly(Token *t, ASMOP *memory, int *ptr, int *success)
 {
 	int eol = end_of_line(t);
-	*success = 1;
 	if ((eol > 2 && t[eol - 2].type == FROM_TO_TOKEN) || (eol > 3 && t[eol - 3].type == FROM_TO_TOKEN))
 	{
 		strcpy(memory[*ptr].operation, "movq");

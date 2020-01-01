@@ -2,8 +2,9 @@
 #include <stdio.h>
 #include "../include/operators.h"
 #include "../include/utils.h"
+#include "../include/labels.h"
 
-#define OPERATORS_DEFINED 5
+#define OPERATORS_DEFINED 11
 
 struct
 {
@@ -11,21 +12,40 @@ struct
 	OPERATOR *operatorPtr;
 } operators_array[OPERATORS_DEFINED];
 
+
 OPERATOR ADD_NUMBER_NUMBER_OP;
-OPERATOR ADD_VOID_NUMBER_OP;
-
-OPERATOR MULTIPLY_NUMBER_NUMBER_OP;
-
-OPERATOR SUBTRACT_NUMBER_NUMBER_OP;
-OPERATOR SUBTRACT_VOID_NUMBER_OP;
-
 TYPE ADD_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success);
+
+OPERATOR ADD_VOID_NUMBER_OP;
 TYPE ADD_Void_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success);
 
+OPERATOR MULTIPLY_NUMBER_NUMBER_OP;
 TYPE MULTIPLY_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success);
 
+OPERATOR SUBTRACT_NUMBER_NUMBER_OP;
 TYPE SUBTRACT_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success);
+
+OPERATOR SUBTRACT_VOID_NUMBER_OP;
 TYPE SUBTRACT_Void_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success);
+
+
+OPERATOR EQ_NUMBER_NUMBER_OP;
+TYPE EQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success);
+
+OPERATOR NEQ_NUMBER_NUMBER_OP;
+TYPE NEQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success);
+
+OPERATOR LEQ_NUMBER_NUMBER_OP;
+TYPE LEQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success);
+
+OPERATOR GEQ_NUMBER_NUMBER_OP;
+TYPE GEQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success);
+
+OPERATOR L_NUMBER_NUMBER_OP;
+TYPE L_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success);
+
+OPERATOR G_NUMBER_NUMBER_OP;
+TYPE G_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success);
 
 void operators_init(){
 	strcpy(operators_array[0].signature, "add<Number,Number>");
@@ -36,33 +56,49 @@ void operators_init(){
     ADD_VOID_NUMBER_OP.call = &ADD_Void_Number;
 	operators_array[1].operatorPtr = &ADD_VOID_NUMBER_OP;
 
-	strcpy(operators_array[2].signature, "multiply<Number,Number>");
-    MULTIPLY_NUMBER_NUMBER_OP.call = &MULTIPLY_Number_Number;
-	operators_array[2].operatorPtr = &MULTIPLY_NUMBER_NUMBER_OP;
-
-	strcpy(operators_array[3].signature, "subtract<Number,Number>");
+	strcpy(operators_array[2].signature, "subtract<Number,Number>");
     SUBTRACT_NUMBER_NUMBER_OP.call = &SUBTRACT_Number_Number;
-	operators_array[3].operatorPtr = &SUBTRACT_NUMBER_NUMBER_OP;
+	operators_array[2].operatorPtr = &SUBTRACT_NUMBER_NUMBER_OP;
 
-	strcpy(operators_array[4].signature, "subtract<Void,Number>");
+	strcpy(operators_array[3].signature, "subtract<Void,Number>");
     SUBTRACT_VOID_NUMBER_OP.call = &SUBTRACT_Void_Number;
-	operators_array[4].operatorPtr = &SUBTRACT_VOID_NUMBER_OP;
+	operators_array[3].operatorPtr = &SUBTRACT_VOID_NUMBER_OP;
+
+	strcpy(operators_array[4].signature, "multiply<Number,Number>");
+    MULTIPLY_NUMBER_NUMBER_OP.call = &MULTIPLY_Number_Number;
+	operators_array[4].operatorPtr = &MULTIPLY_NUMBER_NUMBER_OP;
+
+	strcpy(operators_array[5].signature, "eq<Number,Number>");
+    EQ_NUMBER_NUMBER_OP.call = &EQ_Number_Number;
+	operators_array[5].operatorPtr = &EQ_NUMBER_NUMBER_OP;
+
+	strcpy(operators_array[6].signature, "neq<Number,Number>");
+    NEQ_NUMBER_NUMBER_OP.call = &NEQ_Number_Number;
+	operators_array[6].operatorPtr = &NEQ_NUMBER_NUMBER_OP;
+
+	strcpy(operators_array[7].signature, "leq<Number,Number>");
+    LEQ_NUMBER_NUMBER_OP.call = &LEQ_Number_Number;
+	operators_array[7].operatorPtr = &LEQ_NUMBER_NUMBER_OP;
+    
+    strcpy(operators_array[8].signature, "geq<Number,Number>");
+    GEQ_NUMBER_NUMBER_OP.call = &GEQ_Number_Number;
+	operators_array[8].operatorPtr = &GEQ_NUMBER_NUMBER_OP;
+    
+    strcpy(operators_array[9].signature, "l<Number,Number>");
+    L_NUMBER_NUMBER_OP.call = &L_Number_Number;
+	operators_array[9].operatorPtr = &L_NUMBER_NUMBER_OP;
+    
+    strcpy(operators_array[10].signature, "g<Number,Number>");
+    G_NUMBER_NUMBER_OP.call = &G_Number_Number;
+	operators_array[10].operatorPtr = &G_NUMBER_NUMBER_OP;
 }
 
 OPERATOR *getOperator(const char *signature)
 {
-	int left = 0, right = OPERATORS_DEFINED - 1;
-	while (left <= right)
-	{
-		int mid = (left + right) / 2;
-		int cmp_result = strcmp(signature, operators_array[mid].signature);
-		if (cmp_result < 0)
-			right = mid - 1;
-		else if (cmp_result > 0)
-			left = mid + 1;
-		else
-			return operators_array[mid].operatorPtr;
-	}
+	for(size_t i = 0; i < OPERATORS_DEFINED; i++){
+        if(strcmp(signature, operators_array[i].signature) == 0)
+            return operators_array[i].operatorPtr;
+    }
 	return NULL;
 }
 
@@ -74,17 +110,15 @@ TYPE ADD_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* succes
     strcpy(memory[*ptr].operand2, "%rax");
     memory[*ptr].operand3[0] = '\0';
     (*ptr)++;
-    TYPE t;
+    TYPE t = makeType();
     t.typeid = NUMBER_TYPE;
-    t.saved = NULL;
     return t;
 }
 
 TYPE ADD_Void_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success){
     // Shouldn't do anything
-    TYPE t;
+    TYPE t = makeType();
     t.typeid = NUMBER_TYPE;
-    t.saved = NULL;
     return t;
 }
 
@@ -103,9 +137,8 @@ TYPE SUBTRACT_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* s
     memory[*ptr].operand3[0] = '\0';
     (*ptr)++;
     
-    TYPE t;
+    TYPE t = makeType();
     t.typeid = NUMBER_TYPE;
-    t.saved = NULL;
     return t;
 }
 
@@ -115,9 +148,8 @@ TYPE SUBTRACT_Void_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* suc
     memory[*ptr].operand2[0] = '\0';
     (*ptr)++;
 
-    TYPE t;
+    TYPE t = makeType();
     t.typeid = NUMBER_TYPE;
-    t.saved = NULL;
     return t;
 }
 
@@ -134,8 +166,229 @@ TYPE MULTIPLY_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* s
     memory[*ptr].operand2[0] = '\0';
     (*ptr)++;
 
-    TYPE t;
+    TYPE t = makeType();
     t.typeid = NUMBER_TYPE;
-    t.saved = NULL;
     return t;
+}
+
+TYPE EQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success){
+    strcpy(memory[*ptr].operation, "cmpq");
+    strcpy(memory[*ptr].operand1, "CACHE_MEM+");
+    num_to_str(a->cache_index, memory[*ptr].operand1 + 10);
+    strcpy(memory[*ptr].operand2, "%rax");
+    memory[*ptr].operand3[0] = '\0';
+    (*ptr)++;
+
+    strcpy(memory[*ptr].operation, "movq");
+    strcpy(memory[*ptr].operand1, "$1");
+    strcpy(memory[*ptr].operand2, "%rax");
+    memory[*ptr].operand3[0] = '\0';
+    (*ptr)++;
+
+    LABEL l = make_label();
+
+    strcpy(memory[*ptr].operation, "je");
+    strcpy(memory[*ptr].operand1, l.label_name);
+    memory[*ptr].operand2[0] = '\0';
+    (*ptr)++;
+
+    strcpy(memory[*ptr].operation, "movq");
+    strcpy(memory[*ptr].operand1, "$0");
+    strcpy(memory[*ptr].operand2, "%rax");
+    memory[*ptr].operand3[0] = '\0';
+    (*ptr)++;
+
+    strcpy(memory[*ptr].operation, l.label_name);
+    strcat(memory[*ptr].operation, ":");
+    memory[*ptr].operand1[0] = '\0';
+    (*ptr)++;
+
+    TYPE type = makeType();
+    type.typeid = NUMBER_TYPE;
+    return type;
+}
+
+TYPE NEQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success){
+    strcpy(memory[*ptr].operation, "cmpq");
+    strcpy(memory[*ptr].operand1, "CACHE_MEM+");
+    num_to_str(a->cache_index, memory[*ptr].operand1 + 10);
+    strcpy(memory[*ptr].operand2, "%rax");
+    memory[*ptr].operand3[0] = '\0';
+    (*ptr)++;
+
+    strcpy(memory[*ptr].operation, "movq");
+    strcpy(memory[*ptr].operand1, "$1");
+    strcpy(memory[*ptr].operand2, "%rax");
+    memory[*ptr].operand3[0] = '\0';
+    (*ptr)++;
+
+    LABEL l = make_label();
+
+    strcpy(memory[*ptr].operation, "jne");
+    strcpy(memory[*ptr].operand1, l.label_name);
+    memory[*ptr].operand2[0] = '\0';
+    (*ptr)++;
+
+    strcpy(memory[*ptr].operation, "movq");
+    strcpy(memory[*ptr].operand1, "$0");
+    strcpy(memory[*ptr].operand2, "%rax");
+    memory[*ptr].operand3[0] = '\0';
+    (*ptr)++;
+
+    strcpy(memory[*ptr].operation, l.label_name);
+    strcat(memory[*ptr].operation, ":");
+    memory[*ptr].operand1[0] = '\0';
+    (*ptr)++;
+
+    TYPE type = makeType();
+    type.typeid = NUMBER_TYPE;
+    return type;
+}
+
+TYPE LEQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success){
+    strcpy(memory[*ptr].operation, "cmpq");
+    strcpy(memory[*ptr].operand1, "CACHE_MEM+");
+    num_to_str(a->cache_index, memory[*ptr].operand1 + 10);
+    strcpy(memory[*ptr].operand2, "%rax");
+    memory[*ptr].operand3[0] = '\0';
+    (*ptr)++;
+
+    strcpy(memory[*ptr].operation, "movq");
+    strcpy(memory[*ptr].operand1, "$1");
+    strcpy(memory[*ptr].operand2, "%rax");
+    memory[*ptr].operand3[0] = '\0';
+    (*ptr)++;
+
+    LABEL l = make_label();
+
+    strcpy(memory[*ptr].operation, "jge");
+    strcpy(memory[*ptr].operand1, l.label_name);
+    memory[*ptr].operand2[0] = '\0';
+    (*ptr)++;
+
+    strcpy(memory[*ptr].operation, "movq");
+    strcpy(memory[*ptr].operand1, "$0");
+    strcpy(memory[*ptr].operand2, "%rax");
+    memory[*ptr].operand3[0] = '\0';
+    (*ptr)++;
+
+    strcpy(memory[*ptr].operation, l.label_name);
+    strcat(memory[*ptr].operation, ":");
+    memory[*ptr].operand1[0] = '\0';
+    (*ptr)++;
+
+    TYPE type = makeType();
+    type.typeid = NUMBER_TYPE;
+    return type;
+}
+
+TYPE GEQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success){
+    strcpy(memory[*ptr].operation, "cmpq");
+    strcpy(memory[*ptr].operand1, "CACHE_MEM+");
+    num_to_str(a->cache_index, memory[*ptr].operand1 + 10);
+    strcpy(memory[*ptr].operand2, "%rax");
+    memory[*ptr].operand3[0] = '\0';
+    (*ptr)++;
+
+    strcpy(memory[*ptr].operation, "movq");
+    strcpy(memory[*ptr].operand1, "$1");
+    strcpy(memory[*ptr].operand2, "%rax");
+    memory[*ptr].operand3[0] = '\0';
+    (*ptr)++;
+
+    LABEL l = make_label();
+
+    strcpy(memory[*ptr].operation, "jle");
+    strcpy(memory[*ptr].operand1, l.label_name);
+    memory[*ptr].operand2[0] = '\0';
+    (*ptr)++;
+
+    strcpy(memory[*ptr].operation, "movq");
+    strcpy(memory[*ptr].operand1, "$0");
+    strcpy(memory[*ptr].operand2, "%rax");
+    memory[*ptr].operand3[0] = '\0';
+    (*ptr)++;
+
+    strcpy(memory[*ptr].operation, l.label_name);
+    strcat(memory[*ptr].operation, ":");
+    memory[*ptr].operand1[0] = '\0';
+    (*ptr)++;
+
+    TYPE type = makeType();
+    type.typeid = NUMBER_TYPE;
+    return type;
+}
+
+TYPE L_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success){
+    strcpy(memory[*ptr].operation, "cmpq");
+    strcpy(memory[*ptr].operand1, "CACHE_MEM+");
+    num_to_str(a->cache_index, memory[*ptr].operand1 + 10);
+    strcpy(memory[*ptr].operand2, "%rax");
+    memory[*ptr].operand3[0] = '\0';
+    (*ptr)++;
+
+    strcpy(memory[*ptr].operation, "movq");
+    strcpy(memory[*ptr].operand1, "$1");
+    strcpy(memory[*ptr].operand2, "%rax");
+    memory[*ptr].operand3[0] = '\0';
+    (*ptr)++;
+
+    LABEL l = make_label();
+
+    strcpy(memory[*ptr].operation, "jg");
+    strcpy(memory[*ptr].operand1, l.label_name);
+    memory[*ptr].operand2[0] = '\0';
+    (*ptr)++;
+
+    strcpy(memory[*ptr].operation, "movq");
+    strcpy(memory[*ptr].operand1, "$0");
+    strcpy(memory[*ptr].operand2, "%rax");
+    memory[*ptr].operand3[0] = '\0';
+    (*ptr)++;
+
+    strcpy(memory[*ptr].operation, l.label_name);
+    strcat(memory[*ptr].operation, ":");
+    memory[*ptr].operand1[0] = '\0';
+    (*ptr)++;
+
+    TYPE type = makeType();
+    type.typeid = NUMBER_TYPE;
+    return type;
+}
+
+TYPE G_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success){
+    strcpy(memory[*ptr].operation, "cmpq");
+    strcpy(memory[*ptr].operand1, "CACHE_MEM+");
+    num_to_str(a->cache_index, memory[*ptr].operand1 + 10);
+    strcpy(memory[*ptr].operand2, "%rax");
+    memory[*ptr].operand3[0] = '\0';
+    (*ptr)++;
+
+    strcpy(memory[*ptr].operation, "movq");
+    strcpy(memory[*ptr].operand1, "$1");
+    strcpy(memory[*ptr].operand2, "%rax");
+    memory[*ptr].operand3[0] = '\0';
+    (*ptr)++;
+
+    LABEL l = make_label();
+
+    strcpy(memory[*ptr].operation, "jl");
+    strcpy(memory[*ptr].operand1, l.label_name);
+    memory[*ptr].operand2[0] = '\0';
+    (*ptr)++;
+
+    strcpy(memory[*ptr].operation, "movq");
+    strcpy(memory[*ptr].operand1, "$0");
+    strcpy(memory[*ptr].operand2, "%rax");
+    memory[*ptr].operand3[0] = '\0';
+    (*ptr)++;
+
+    strcpy(memory[*ptr].operation, l.label_name);
+    strcat(memory[*ptr].operation, ":");
+    memory[*ptr].operand1[0] = '\0';
+    (*ptr)++;
+
+    TYPE type = makeType();
+    type.typeid = NUMBER_TYPE;
+    return type;
 }

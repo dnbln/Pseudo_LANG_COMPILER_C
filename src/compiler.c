@@ -10,6 +10,7 @@
 #include "../include/utils.h"
 #include "../include/operators.h"
 #include "../include/errors.h"
+#include "../include/labels.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -18,11 +19,11 @@ int compiler_line;
 void Compile(COMPILER_INTERNAL *internal_state, int *success)
 {
 	internal_state->asmop_memptr = 0;
-	*success = 1;
 	compiler_line = 1;
-	for (int i = 0; *success == 1 && i < internal_state->STATEMENT_POINTER; i++)
+	for (int i = 0; *success == 1 && i < internal_state->STATEMENT_POINTER; i++){
 		Compile_Statement(internal_state, internal_state->statements[i],
 						  success);
+	}
 }
 
 void Compile_Statement(COMPILER_INTERNAL *internal_state, Statement s,
@@ -251,6 +252,50 @@ void make_signature(unsigned long long op, int op_class, TYPE type1, TYPE type2,
 		else if (type2.typeid == VOID_TYPE)
 			strcat(sig, ",Void>");
 	}
+	else if (op_class == EQUALITY_OP_TOKEN)
+	{
+		switch (op)
+		{
+		case EQ:
+			strcpy(sig, "eq");
+			break;
+		case NEQ:
+			strcpy(sig, "neq");
+			break;
+		case LEQ:
+			strcpy(sig, "leq");
+			break;
+		case GEQ:
+			strcpy(sig, "geq");
+			break;
+		case G:
+			strcpy(sig, "g");
+			break;
+		case L:
+			strcpy(sig, "l");
+			break;
+		default:
+			break;
+		}
+
+		if (type1.typeid == NUMBER_TYPE)
+			strcat(sig, "<Number");
+		else if (type1.typeid == STRING_TYPE)
+			strcat(sig, "<String");
+		else if (type1.typeid == ERROR_TYPE)
+			strcat(sig, "<Error");
+		else if (type1.typeid == VOID_TYPE)
+			strcat(sig, "<Void");
+
+		if (type2.typeid == NUMBER_TYPE)
+			strcat(sig, ",Number>");
+		else if (type2.typeid == STRING_TYPE)
+			strcat(sig, ",String>");
+		else if (type2.typeid == ERROR_TYPE)
+			strcat(sig, ",Error>");
+		else if (type2.typeid == VOID_TYPE)
+			strcat(sig, ",Void>");
+	}
 }
 
 TYPE callOperator(CACHE_PTR a, unsigned long long op, int op_class, TYPE b, ASMOP *memory, int *ptr, int *success)
@@ -324,7 +369,6 @@ char *compiler_addString(const char *stringVal)
 CACHE_PTR base;
 CACHE_PTR current;
 size_t cache_offset;
-size_t label_ind;
 
 void compiler_init()
 {
@@ -332,7 +376,7 @@ void compiler_init()
 	cache_init();
 	cache_clear();
 	operators_init();
-	label_ind = 0;
+	labels_init();
 }
 
 void cache_init()
@@ -429,15 +473,6 @@ CACHE_PTR save_result(TYPE *result_type, ASMOP *memory, int *ptr, int *success)
 int compiler_getLine()
 {
 	return compiler_line;
-}
-
-LABEL make_label()
-{
-	LABEL l;
-	strcpy(l.label_name, ".l");
-	num_to_str(label_ind, l.label_name + 2);
-	label_ind++;
-	return l;
 }
 
 void cond_generate_assembly(COMPILER_INTERNAL *internal_state, Conditional_Statement *statement, ASMOP *memory, int *ptr, int *success)

@@ -1,5 +1,5 @@
 begin
-    if 0 then
+    if 1 == 0 then
         print "true", "\n"
     else
         print "false", "\n"
