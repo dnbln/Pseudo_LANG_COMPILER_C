@@ -591,6 +591,34 @@ size_t prevOp(ASMOP *mem, size_t size, size_t i);
 
 void const_optimize(ASMOP *mem, size_t size)
 {
+	FILE *f = stdout;
+	for (size_t i = 0; i < size; i++)
+	{
+		ASMOP *op = mem + i;
+		if (op->operation[0] == '\0')
+			continue;
+		fprintf(f, "\t%s", op->operation);
+		if (op->operand1[0] == '\0')
+		{
+			fprintf(f, "\n");
+			continue;
+		}
+		fprintf(f, " %s", op->operand1);
+		if (op->operand2[0] == '\0')
+		{
+			fprintf(f, "\n");
+			continue;
+		}
+		fprintf(f, ", %s", op->operand2);
+		if (op->operand3[0] == '\0')
+		{
+			fprintf(f, "\n");
+			continue;
+		}
+		fprintf(f, ", %s", op->operand3);
+		fprintf(f, "\n");
+	}
+
 	flags_const = 0;
 	for (size_t i = 0; i < size; i++)
 	{
@@ -783,11 +811,17 @@ void const_optimize(ASMOP *mem, size_t size)
 			else
 				flags_const = 0;
 		}
+		if(strncmp(mem[i].operation, "add", 3) == 0 || strncmp(mem[i].operation, "sub", 3) == 0 || strncmp(mem[i].operation, "or", 2) == 0 || strncmp(mem[i].operation, "xor", 3) == 0){
+			set_const(mem[i].operand2, "", 0);
+		}
 	}
-	for(size_t i = 0; i < size; i++){
-		if(mem[i].operation[0] == '\0')continue;
-		if(mem[i].operation[strlen(mem[i].operation) - 1] == ':'){
-			if(countLabelOccurances(mem, size, mem[i].operation) == 0)
+	for (size_t i = 0; i < size; i++)
+	{
+		if (mem[i].operation[0] == '\0')
+			continue;
+		if (mem[i].operation[strlen(mem[i].operation) - 1] == ':')
+		{
+			if (countLabelOccurances(mem, size, mem[i].operation) == 0)
 				mem[i].operation[0] = '\0';
 		}
 	}
@@ -994,6 +1028,8 @@ is_needed_answer is_needed(char *operand)
 
 void set_needed(char *operand, unsigned needed)
 {
+	if (isImmediate(operand))
+		return;
 	is_needed_answer ans = is_needed(operand);
 	if (ans.ptr == NULL)
 	{
@@ -1033,6 +1069,12 @@ void usage_optimize(ASMOP *mem, size_t size)
 				set_needed(STREAM_REGISTER, 1);
 			}
 		}
+		if (strncmp(mem[i].operation, "mul", 3) == 0 || strncmp(mem[i].operation, "div", 3) == 0)
+		{
+			set_needed("%rax", 1);
+			set_needed("%rdx", 1);
+			set_needed(mem[i].operand1, 1);
+		}
 		if (mem[i].operand2[0] == '\0')
 			continue;
 		if (strncmp(mem[i].operation, "mov", 3) == 0)
@@ -1047,6 +1089,11 @@ void usage_optimize(ASMOP *mem, size_t size)
 			set_needed(mem[i].operand2, 0);
 		}
 		if (strncmp(mem[i].operation, "cmp", 3) == 0)
+		{
+			set_needed(mem[i].operand1, 1);
+			set_needed(mem[i].operand2, 1);
+		}
+		if (strncmp(mem[i].operation, "add", 3) == 0 || strncmp(mem[i].operation, "sub", 3) == 0 || strncmp(mem[i].operation, "and", 3) == 0 || strncmp(mem[i].operation, "or", 3) == 0 || strncmp(mem[i].operation, "xor", 3) == 0)
 		{
 			set_needed(mem[i].operand1, 1);
 			set_needed(mem[i].operand2, 1);
