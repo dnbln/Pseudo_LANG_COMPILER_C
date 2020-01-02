@@ -14,38 +14,38 @@ struct
 
 
 OPERATOR ADD_NUMBER_NUMBER_OP;
-TYPE ADD_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success);
+TYPE ADD_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, size_t* ptr, int* success);
 
 OPERATOR ADD_VOID_NUMBER_OP;
-TYPE ADD_Void_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success);
+TYPE ADD_Void_Number(CACHE_PTR a, TYPE b, ASMOP* memory, size_t* ptr, int* success);
 
 OPERATOR MULTIPLY_NUMBER_NUMBER_OP;
-TYPE MULTIPLY_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success);
+TYPE MULTIPLY_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, size_t* ptr, int* success);
 
 OPERATOR SUBTRACT_NUMBER_NUMBER_OP;
-TYPE SUBTRACT_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success);
+TYPE SUBTRACT_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, size_t* ptr, int* success);
 
 OPERATOR SUBTRACT_VOID_NUMBER_OP;
-TYPE SUBTRACT_Void_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success);
+TYPE SUBTRACT_Void_Number(CACHE_PTR a, TYPE b, ASMOP* memory, size_t* ptr, int* success);
 
 
 OPERATOR EQ_NUMBER_NUMBER_OP;
-TYPE EQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success);
+TYPE EQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, size_t* ptr, int* success);
 
 OPERATOR NEQ_NUMBER_NUMBER_OP;
-TYPE NEQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success);
+TYPE NEQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, size_t* ptr, int* success);
 
 OPERATOR LEQ_NUMBER_NUMBER_OP;
-TYPE LEQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success);
+TYPE LEQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, size_t* ptr, int* success);
 
 OPERATOR GEQ_NUMBER_NUMBER_OP;
-TYPE GEQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success);
+TYPE GEQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, size_t* ptr, int* success);
 
 OPERATOR L_NUMBER_NUMBER_OP;
-TYPE L_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success);
+TYPE L_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, size_t* ptr, int* success);
 
 OPERATOR G_NUMBER_NUMBER_OP;
-TYPE G_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success);
+TYPE G_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, size_t* ptr, int* success);
 
 void operators_init(){
 	strcpy(operators_array[0].signature, "add<Number,Number>");
@@ -103,7 +103,7 @@ OPERATOR *getOperator(const char *signature)
 }
 
 
-TYPE ADD_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success){
+TYPE ADD_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, size_t* ptr, int* success){
     strcpy(memory[*ptr].operation, "addq");
     strcpy(memory[*ptr].operand1, "CACHE_MEM+");
     num_to_str(a->cache_index, memory[*ptr].operand1+10);
@@ -115,14 +115,14 @@ TYPE ADD_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* succes
     return t;
 }
 
-TYPE ADD_Void_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success){
+TYPE ADD_Void_Number(CACHE_PTR a, TYPE b, ASMOP* memory, size_t* ptr, int* success){
     // Shouldn't do anything
     TYPE t = makeType();
     t.typeid = NUMBER_TYPE;
     return t;
 }
 
-TYPE SUBTRACT_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success){
+TYPE SUBTRACT_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, size_t* ptr, int* success){
     strcpy(memory[*ptr].operation, "subq");
     strcpy(memory[*ptr].operand1, "%rax");
     strcpy(memory[*ptr].operand2, "CACHE_MEM+");
@@ -142,7 +142,7 @@ TYPE SUBTRACT_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* s
     return t;
 }
 
-TYPE SUBTRACT_Void_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success){
+TYPE SUBTRACT_Void_Number(CACHE_PTR a, TYPE b, ASMOP* memory, size_t* ptr, int* success){
     strcpy(memory[*ptr].operation, "negq");
     strcpy(memory[*ptr].operand1, "%rax");
     memory[*ptr].operand2[0] = '\0';
@@ -153,7 +153,7 @@ TYPE SUBTRACT_Void_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* suc
     return t;
 }
 
-TYPE MULTIPLY_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success){
+TYPE MULTIPLY_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, size_t* ptr, int* success){
     strcpy(memory[*ptr].operation, "movq");
     strcpy(memory[*ptr].operand1, "CACHE_MEM+");
     num_to_str(a->cache_index, memory[*ptr].operand1 + 10);
@@ -171,7 +171,7 @@ TYPE MULTIPLY_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* s
     return t;
 }
 
-TYPE EQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success){
+TYPE EQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, size_t* ptr, int* success){
     strcpy(memory[*ptr].operation, "cmpq");
     strcpy(memory[*ptr].operand1, "CACHE_MEM+");
     num_to_str(a->cache_index, memory[*ptr].operand1 + 10);
@@ -208,7 +208,7 @@ TYPE EQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success
     return type;
 }
 
-TYPE NEQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success){
+TYPE NEQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, size_t* ptr, int* success){
     strcpy(memory[*ptr].operation, "cmpq");
     strcpy(memory[*ptr].operand1, "CACHE_MEM+");
     num_to_str(a->cache_index, memory[*ptr].operand1 + 10);
@@ -245,7 +245,7 @@ TYPE NEQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* succes
     return type;
 }
 
-TYPE LEQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success){
+TYPE LEQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, size_t* ptr, int* success){
     strcpy(memory[*ptr].operation, "cmpq");
     strcpy(memory[*ptr].operand1, "CACHE_MEM+");
     num_to_str(a->cache_index, memory[*ptr].operand1 + 10);
@@ -282,7 +282,7 @@ TYPE LEQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* succes
     return type;
 }
 
-TYPE GEQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success){
+TYPE GEQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, size_t* ptr, int* success){
     strcpy(memory[*ptr].operation, "cmpq");
     strcpy(memory[*ptr].operand1, "CACHE_MEM+");
     num_to_str(a->cache_index, memory[*ptr].operand1 + 10);
@@ -319,7 +319,7 @@ TYPE GEQ_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* succes
     return type;
 }
 
-TYPE L_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success){
+TYPE L_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, size_t* ptr, int* success){
     strcpy(memory[*ptr].operation, "cmpq");
     strcpy(memory[*ptr].operand1, "CACHE_MEM+");
     num_to_str(a->cache_index, memory[*ptr].operand1 + 10);
@@ -356,7 +356,7 @@ TYPE L_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success)
     return type;
 }
 
-TYPE G_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success){
+TYPE G_Number_Number(CACHE_PTR a, TYPE b, ASMOP* memory, size_t* ptr, int* success){
     strcpy(memory[*ptr].operation, "cmpq");
     strcpy(memory[*ptr].operand1, "CACHE_MEM+");
     num_to_str(a->cache_index, memory[*ptr].operand1 + 10);

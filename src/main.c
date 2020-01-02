@@ -50,6 +50,7 @@ int main(int argc, char **argv) {
 	if (success){
 		Compile(&internal_state, &success);
 		cache_delete();
+		compiler_optimize(internal_state.asmop_mem, internal_state.asmop_memptr);
 	}
 	if (success) {
 		f = fopen(assembly_file, "w");

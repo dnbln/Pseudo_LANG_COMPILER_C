@@ -22,15 +22,15 @@
 #define CONDITIONAL_STATEMENTS 65536
 
 typedef struct {
-	int TOKEN_PTR;
-	int STATEMENT_POINTER;
-	int COMPOSITE_STATEMENT_POINTER;
-	int INSIDE_COMPOSITE_STATEMENT_POINTER;
+	size_t TOKEN_PTR;
+	size_t STATEMENT_POINTER;
+	size_t COMPOSITE_STATEMENT_POINTER;
+	size_t INSIDE_COMPOSITE_STATEMENT_POINTER;
 	char *FILE_PTR;
-	unsigned CHARACTERS_READ;
+	size_t CHARACTERS_READ;
 	char *DATA_PTR;
-	int asmop_memptr;
-	int STATEMENT_DATA_PTR;
+	size_t asmop_memptr;
+	size_t STATEMENT_DATA_PTR;
 
 	char text_read[TEXT_READ_SIZE];
 	Token tokens[TOKENS_MAX];

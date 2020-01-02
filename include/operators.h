@@ -5,7 +5,7 @@
 #include "compiler.h"
 
 
-typedef TYPE OPERATOR_CALL(CACHE_PTR a, TYPE b, ASMOP* memory, int* ptr, int* success);
+typedef TYPE OPERATOR_CALL(CACHE_PTR a, TYPE b, ASMOP* memory, size_t* ptr, int* success);
 
 typedef struct {
 	OPERATOR_CALL* call;

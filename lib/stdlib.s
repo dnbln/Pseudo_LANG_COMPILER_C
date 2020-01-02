@@ -56,7 +56,7 @@ _pseudo_lib_exit:
 _error:
 	neg %rax
 	movq %rax, %rdi
-	movq $60, %rax
+	movq $SYS_EXIT, %rax
 	syscall
 
 .globl _load_strlen_to_rbx

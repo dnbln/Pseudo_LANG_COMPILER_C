@@ -346,7 +346,8 @@ void GetNextStatement(COMPILER_INTERNAL *state, Statement *statement, int *line,
 		while (state->tokens[ptr].type != FILE_END_TOKEN && state->tokens[ptr].type != THEN_TOKEN)
 		{
 			ptr++;
-			if(state->tokens[ptr].type == NEW_LINE_TOKEN){
+			if (state->tokens[ptr].type == NEW_LINE_TOKEN)
+			{
 				(*line)++;
 			}
 		}
@@ -371,20 +372,22 @@ void GetNextStatement(COMPILER_INTERNAL *state, Statement *statement, int *line,
 		Statement onTrue, onFalse;
 		unsigned has_false = 0;
 		GetNextStatement(state, &onTrue, line, success);
-		while(state->tokens[state->TOKEN_PTR].type == NEW_LINE_TOKEN){
+		while (state->tokens[state->TOKEN_PTR].type == NEW_LINE_TOKEN)
+		{
 			state->TOKEN_PTR++;
 			(*line)++;
 		}
-		if(state->tokens[state->TOKEN_PTR].type == ELSE_TOKEN){
+		if (state->tokens[state->TOKEN_PTR].type == ELSE_TOKEN)
+		{
 			state->TOKEN_PTR++;
 			GetNextStatement(state, &onFalse, line, success);
 			has_false = 1;
 		}
-		((Conditional_Statement*)statement->data)->condition = cond;
-		((Conditional_Statement*)statement->data)->onTrue = onTrue;
-		if(has_false)
-			((Conditional_Statement*)statement->data)->onFalse = onFalse;
-		((Conditional_Statement*)statement->data)->has_false = has_false;
+		((Conditional_Statement *)statement->data)->condition = cond;
+		((Conditional_Statement *)statement->data)->onTrue = onTrue;
+		if (has_false)
+			((Conditional_Statement *)statement->data)->onFalse = onFalse;
+		((Conditional_Statement *)statement->data)->has_false = has_false;
 		return;
 	}
 	printf("Unknown token at beginning of statement %d '%s'\n",
@@ -399,19 +402,27 @@ void Write(FILE *f, COMPILER_INTERNAL *internal_state)
 	for (int i = 0; i < internal_state->asmop_memptr; i++)
 	{
 		ASMOP *op = internal_state->asmop_mem + i;
+		if (op->operation[0] == '\0')
+			continue;
 		fprintf(f, "\t%s", op->operation);
-		if (op->operand1[0] != '\0')
+		if (op->operand1[0] == '\0')
 		{
-			fprintf(f, " %s", op->operand1);
-			if (op->operand2[0] != '\0')
-			{
-				fprintf(f, ", %s", op->operand2);
-				if (op->operand3[0] != '\0')
-				{
-					fprintf(f, ", %s", op->operand3);
-				}
-			}
+			fprintf(f, "\n");
+			continue;
 		}
+		fprintf(f, " %s", op->operand1);
+		if (op->operand2[0] == '\0')
+		{
+			fprintf(f, "\n");
+			continue;
+		}
+		fprintf(f, ", %s", op->operand2);
+		if (op->operand3[0] == '\0')
+		{
+			fprintf(f, "\n");
+			continue;
+		}
+		fprintf(f, ", %s", op->operand3);
 		fprintf(f, "\n");
 	}
 	fprintf(f, "\tmovq $0, %%rax\n\tcallq _pseudo_lib_exit@PLT\n");

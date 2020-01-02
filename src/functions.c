@@ -10,7 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#define PREDEFINED_FUNCTIONS 1
+#define PREDEFINED_FUNCTIONS 2
 
 Function declared_functions[PREDEFINED_FUNCTIONS];
 
@@ -30,21 +30,25 @@ void GetFunction(const char *name, Function *f, int *found)
 
 int end_of_line(Token *t); // returns the index in the array t of the first new line token
 
-ASMOP *print_generate_assembly(Token *t, ASMOP *memory, int *size, int *success);
+ASMOP *print_generate_assembly(Token *t, ASMOP *memory, size_t *size, int *success);
 char *(*_varname)(const char *identifier_name);
 TYPE(*value_instructions)
-(Token *, int, ASMOP *, int *, int *);
+(Token *, int, ASMOP *, size_t *, int *);
 
 void Init_Functions(char *(*varname)(const char *identifier_name),
-					TYPE (*v_instructions)(Token *, int, ASMOP *, int *, int *))
+					TYPE (*v_instructions)(Token *, int, ASMOP *, size_t *, int *))
 {
 	strcpy(declared_functions[0].name, "print");
 	declared_functions[0].generate_assembly = &print_generate_assembly;
+
+	strcpy(declared_functions[1].name, "write");
+	declared_functions[1].generate_assembly = &print_generate_assembly;
+
 	_varname = varname;
 	value_instructions = v_instructions;
 }
 
-void print_num_handler(ASMOP *memory, int *ptr, int *success)
+void print_num_handler(ASMOP *memory, size_t *ptr, int *success)
 {
 	strcpy(memory[*ptr].operation, "callq");
 	strcpy(memory[*ptr].operand1, "_print_number@PLT");
@@ -52,7 +56,7 @@ void print_num_handler(ASMOP *memory, int *ptr, int *success)
 	(*ptr)++;
 }
 
-void print_str_handler(ASMOP *memory, int *ptr, int *success)
+void print_str_handler(ASMOP *memory, size_t *ptr, int *success)
 {
 	strcpy(memory[*ptr].operation, "callq");
 	strcpy(memory[*ptr].operand1, "_print_string@PLT");
@@ -60,7 +64,7 @@ void print_str_handler(ASMOP *memory, int *ptr, int *success)
 	(*ptr)++;
 }
 
-ASMOP *print_generate_assembly(Token *t, ASMOP *memory, int *ptr, int *success)
+ASMOP *print_generate_assembly(Token *t, ASMOP *memory, size_t *ptr, int *success)
 {
 	int eol = end_of_line(t);
 	if ((eol > 2 && t[eol - 2].type == FROM_TO_TOKEN) || (eol > 3 && t[eol - 3].type == FROM_TO_TOKEN))
@@ -93,12 +97,10 @@ ASMOP *print_generate_assembly(Token *t, ASMOP *memory, int *ptr, int *success)
 			last_p = i + 1;
 			if (type.typeid == NUMBER_TYPE)
 			{
-				// movq %rax, %rax # does nothing
 				print_num_handler(memory, ptr, success);
 			}
 			else if (type.typeid == STRING_TYPE)
 			{
-				// movq %rax, %rax # does nothing
 				print_str_handler(memory, ptr, success);
 			}
 		}
@@ -108,12 +110,10 @@ ASMOP *print_generate_assembly(Token *t, ASMOP *memory, int *ptr, int *success)
 	TYPE type = value_instructions(t + last_p, len, memory, ptr, success);
 	if (type.typeid == NUMBER_TYPE)
 	{
-		// movq %rax, %rax # does nothing
 		print_num_handler(memory, ptr, success);
 	}
 	else if (type.typeid == STRING_TYPE)
 	{
-		// movq %rax, %rax # does nothing
 		print_str_handler(memory, ptr, success);
 	}
 

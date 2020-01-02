@@ -17,6 +17,7 @@
 typedef struct {
 	unsigned long long int typeid;
 	void *saved;
+	unsigned isConst;
 } TYPE;
 
 TYPE makeType();

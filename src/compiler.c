@@ -6,13 +6,15 @@
  */
 
 #include "../include/compiler.h"
-#include "../include/functions.h"
-#include "../include/utils.h"
-#include "../include/operators.h"
-#include "../include/errors.h"
-#include "../include/labels.h"
+
 #include <stdlib.h>
 #include <string.h>
+
+#include "../include/errors.h"
+#include "../include/functions.h"
+#include "../include/labels.h"
+#include "../include/operators.h"
+#include "../include/utils.h"
 
 int compiler_line;
 
@@ -20,13 +22,14 @@ void Compile(COMPILER_INTERNAL *internal_state, int *success)
 {
 	internal_state->asmop_memptr = 0;
 	compiler_line = 1;
-	for (int i = 0; *success == 1 && i < internal_state->STATEMENT_POINTER; i++){
-		Compile_Statement(internal_state, internal_state->statements[i],
-						  success);
+	for (int i = 0; *success == 1 && i < internal_state->STATEMENT_POINTER; i++)
+	{
+		Compile_Statement(internal_state, internal_state->statements[i], success);
 	}
 }
 
-void Compile_Statement(COMPILER_INTERNAL *internal_state, Statement s,
+void Compile_Statement(COMPILER_INTERNAL *internal_state,
+					   Statement s,
 					   int *success)
 {
 	const int type = s.type;
@@ -50,15 +53,19 @@ void Compile_Statement(COMPILER_INTERNAL *internal_state, Statement s,
 	else if (type == CONDITIONAL_STATEMENT)
 	{
 		Conditional_Statement *statement_data = (Conditional_Statement *)s.data;
-		cond_generate_assembly(internal_state, statement_data, internal_state->asmop_mem, &(internal_state->asmop_memptr), success);
+		cond_generate_assembly(internal_state, statement_data,
+							   internal_state->asmop_mem,
+							   &(internal_state->asmop_memptr), success);
 	}
 }
 
-TYPE compiler_value_instructions(Token *t, int n, ASMOP *memory, int *ptr,
+TYPE compiler_value_instructions(Token *t,
+								 int n,
+								 ASMOP *memory,
+								 size_t *ptr,
 								 int *success)
 {
-	TYPE type;
-	type.saved = NULL;
+	TYPE type = makeType();
 	type.typeid = VOID_TYPE;
 	if (n == 0)
 	{
@@ -136,8 +143,10 @@ TYPE compiler_value_instructions(Token *t, int n, ASMOP *memory, int *ptr,
 				continue;
 			}
 			int len = j - i - 1;
-			TYPE parenthesis_result_type = compiler_value_instructions(t + i + 1, len, memory, ptr, success);
-			CACHE_PTR retptr = save_result(&parenthesis_result_type, memory, ptr, success);
+			TYPE parenthesis_result_type =
+				compiler_value_instructions(t + i + 1, len, memory, ptr, success);
+			CACHE_PTR retptr =
+				save_result(&parenthesis_result_type, memory, ptr, success);
 			t[i].data = retptr;
 			t[j].data = &t[i];
 			if (i == 0 && j == n - 1)
@@ -158,8 +167,10 @@ TYPE compiler_value_instructions(Token *t, int n, ASMOP *memory, int *ptr,
 		{
 			TYPE left_type = compiler_value_instructions(t, i, memory, ptr, success);
 			CACHE_PTR left = save_result(&left_type, memory, ptr, success);
-			TYPE right = compiler_value_instructions(t + i + 1, n - i - 1, memory, ptr, success);
-			TYPE result = callOperator(left, (unsigned long long)t[i].data, t[i].type, right, memory, ptr, success);
+			TYPE right = compiler_value_instructions(t + i + 1, n - i - 1, memory,
+													 ptr, success);
+			TYPE result = callOperator(left, (unsigned long long)t[i].data, t[i].type,
+									   right, memory, ptr, success);
 			return result;
 		}
 	}
@@ -174,8 +185,10 @@ TYPE compiler_value_instructions(Token *t, int n, ASMOP *memory, int *ptr,
 		{
 			TYPE left_type = compiler_value_instructions(t, i, memory, ptr, success);
 			CACHE_PTR left = save_result(&left_type, memory, ptr, success);
-			TYPE right = compiler_value_instructions(t + i + 1, n - i - 1, memory, ptr, success);
-			TYPE result = callOperator(left, (unsigned long long)t[i].data, t[i].type, right, memory, ptr, success);
+			TYPE right = compiler_value_instructions(t + i + 1, n - i - 1, memory,
+													 ptr, success);
+			TYPE result = callOperator(left, (unsigned long long)t[i].data, t[i].type,
+									   right, memory, ptr, success);
 			return result;
 		}
 	}
@@ -186,12 +199,16 @@ TYPE compiler_value_instructions(Token *t, int n, ASMOP *memory, int *ptr,
 			i = ((Token *)t[i].data) - t + 1;
 			continue;
 		}
-		if (t[i].type == ARITH_OP_TOKEN && ((unsigned long long int)t[i].data == ADD || (unsigned long long int)t[i].data == SUBTRACT))
+		if (t[i].type == ARITH_OP_TOKEN &&
+			((unsigned long long int)t[i].data == ADD ||
+			 (unsigned long long int)t[i].data == SUBTRACT))
 		{
 			TYPE left_type = compiler_value_instructions(t, i, memory, ptr, success);
 			CACHE_PTR left = save_result(&left_type, memory, ptr, success);
-			TYPE right = compiler_value_instructions(t + i + 1, n - i - 1, memory, ptr, success);
-			TYPE result = callOperator(left, (unsigned long long)t[i].data, t[i].type, right, memory, ptr, success);
+			TYPE right = compiler_value_instructions(t + i + 1, n - i - 1, memory,
+													 ptr, success);
+			TYPE result = callOperator(left, (unsigned long long)t[i].data, t[i].type,
+									   right, memory, ptr, success);
 			return result;
 		}
 	}
@@ -202,19 +219,27 @@ TYPE compiler_value_instructions(Token *t, int n, ASMOP *memory, int *ptr,
 			i = ((Token *)t[i].data) - t + 1;
 			continue;
 		}
-		if (t[i].type == ARITH_OP_TOKEN && ((unsigned long long int)t[i].data == MULTIPLY || (unsigned long long int)t[i].data == DIVIDE))
+		if (t[i].type == ARITH_OP_TOKEN &&
+			((unsigned long long int)t[i].data == MULTIPLY ||
+			 (unsigned long long int)t[i].data == DIVIDE))
 		{
 			TYPE left_type = compiler_value_instructions(t, i, memory, ptr, success);
 			CACHE_PTR left = save_result(&left_type, memory, ptr, success);
-			TYPE right = compiler_value_instructions(t + i + 1, n - i - 1, memory, ptr, success);
-			TYPE result = callOperator(left, (unsigned long long)t[i].data, t[i].type, right, memory, ptr, success);
+			TYPE right = compiler_value_instructions(t + i + 1, n - i - 1, memory,
+													 ptr, success);
+			TYPE result = callOperator(left, (unsigned long long)t[i].data, t[i].type,
+									   right, memory, ptr, success);
 			return result;
 		}
 	}
 	return type;
 }
 
-void make_signature(unsigned long long op, int op_class, TYPE type1, TYPE type2, char sig[64])
+void make_signature(unsigned long long op,
+					int op_class,
+					TYPE type1,
+					TYPE type2,
+					char sig[64])
 {
 	sig[0] = '\0';
 	if (op_class == ARITH_OP_TOKEN)
@@ -298,7 +323,13 @@ void make_signature(unsigned long long op, int op_class, TYPE type1, TYPE type2,
 	}
 }
 
-TYPE callOperator(CACHE_PTR a, unsigned long long op, int op_class, TYPE b, ASMOP *memory, int *ptr, int *success)
+TYPE callOperator(CACHE_PTR a,
+				  unsigned long long op,
+				  int op_class,
+				  TYPE b,
+				  ASMOP *memory,
+				  size_t *ptr,
+				  int *success)
 {
 	char sig[64] = {};
 	make_signature(op, op_class, a->data_type, b, sig);
@@ -313,9 +344,8 @@ TYPE callOperator(CACHE_PTR a, unsigned long long op, int op_class, TYPE b, ASMO
 		strcpy((char *)err.extra, sig);
 		load_error(err);
 		*success = 0;
-		TYPE t;
+		TYPE t = makeType();
 		t.typeid = ERROR_TYPE;
-		t.saved = NULL;
 		return t;
 	}
 	return opr->call(a, b, memory, ptr, success);
@@ -362,7 +392,8 @@ char *compiler_addString(const char *stringVal)
 {
 	strcpy(string_list.strings[string_list.string_count], stringVal);
 	strcpy(string_list.strName[string_list.string_count], "str");
-	num_to_str(string_list.string_count, string_list.strName[string_list.string_count] + 3);
+	num_to_str(string_list.string_count,
+			   string_list.strName[string_list.string_count] + 3);
 	return string_list.strName[string_list.string_count++];
 }
 
@@ -402,13 +433,15 @@ void compiler_writeDataAndVariables(FILE *f)
 		fprintf(f, ".section .rodata\n");
 		for (size_t i = 0; i < string_list.string_count; i++)
 		{
-			fprintf(f, "%s:\n\t.asciz \"%s\"\n", string_list.strName[i], string_list.strings[i]);
+			fprintf(f, "%s:\n\t.ascii \"%s\"\n", string_list.strName[i],
+					string_list.strings[i]);
 		}
 	}
 	fprintf(f, ".section .bss\n\t.lcomm CACHE_MEM, 524288\n");
 }
 
-CACHE_PTR save_result(TYPE *result_type, ASMOP *memory, int *ptr, int *success)
+CACHE_PTR
+save_result(TYPE *result_type, ASMOP *memory, size_t *ptr, int *success)
 {
 	if (result_type->saved != NULL)
 		return result_type->saved;
@@ -458,7 +491,8 @@ CACHE_PTR save_result(TYPE *result_type, ASMOP *memory, int *ptr, int *success)
 		current++;
 		return ret;
 	}
-	else if (result_type->typeid == VOID_TYPE || result_type->typeid == ERROR_TYPE)
+	else if (result_type->typeid == VOID_TYPE ||
+			 result_type->typeid == ERROR_TYPE)
 	{
 		result_type->saved = (void *)current;
 		current->data_type = *result_type;
@@ -475,9 +509,14 @@ int compiler_getLine()
 	return compiler_line;
 }
 
-void cond_generate_assembly(COMPILER_INTERNAL *internal_state, Conditional_Statement *statement, ASMOP *memory, int *ptr, int *success)
+void cond_generate_assembly(COMPILER_INTERNAL *internal_state,
+							Conditional_Statement *statement,
+							ASMOP *memory,
+							size_t *ptr,
+							int *success)
 {
-	TYPE t = compiler_value_instructions(statement->condition.ptr, statement->condition.tn, memory, ptr, success);
+	TYPE t = compiler_value_instructions(
+		statement->condition.ptr, statement->condition.tn, memory, ptr, success);
 	if (*success == 0)
 		return;
 	if (t.typeid != NUMBER_TYPE)
@@ -513,4 +552,515 @@ void cond_generate_assembly(COMPILER_INTERNAL *internal_state, Conditional_State
 	strcat(memory[*ptr].operation, ":");
 	memory[*ptr].operand1[0] = '\0';
 	(*ptr)++;
+}
+
+typedef struct const_hashmap_elem
+{
+	char key[OPERAND_SIZE];
+	char value[OPERAND_SIZE];
+	unsigned is_const;
+	struct const_hashmap_elem *next;
+} const_hashmap_elem;
+
+typedef struct
+{
+	unsigned value;
+	const_hashmap_elem *elem;
+} is_const_answer;
+
+void replace_with_const(char *operand, const_hashmap_elem *elem);
+is_const_answer is_const(char *operand);
+void set_const(char *operand, char *value, unsigned is_const);
+unsigned isImmediate(char *operand);
+const_hashmap_elem *head;
+unsigned flags;
+unsigned flags_const;
+
+void remove_until_label(ASMOP *mem, size_t size, size_t i);
+size_t indexOfLabel(ASMOP *mem, size_t i, size_t size, char *label);
+
+void print_const_map();
+
+#define E_FLAG 1
+#define G_FLAG 2
+#define L_FLAG 4
+
+size_t countLabelOccurances(ASMOP *mem, size_t size, char *label);
+size_t nextOp(ASMOP *mem, size_t size, size_t i);
+size_t prevOp(ASMOP *mem, size_t size, size_t i);
+
+void const_optimize(ASMOP *mem, size_t size)
+{
+	flags_const = 0;
+	for (size_t i = 0; i < size; i++)
+	{
+		if (mem[i].operation[0] == '\0' || strncmp(mem[i].operation, "mul", 3) == 0 || strncmp(mem[i].operation, "div", 3) == 0)
+			continue;
+		if (mem[i].operand1[0] == '\0')
+			continue;
+		if (mem[i].operation[strlen(mem[i].operand1) - 1] == ':') // is label?
+		{
+			if (countLabelOccurances(mem, size, mem[i].operation) == 0)
+			{
+				mem[i].operation[0] = '\0';
+				continue;
+			}
+			if (strcmp(mem[i].operand2, "LOOP GOBACK") == 0)
+				for (const_hashmap_elem *ptr = head->next; ptr != NULL; ptr = ptr->next)
+				{
+					ptr->is_const = 0;
+				}
+		}
+		if (mem[i].operation[0] == 'j' && flags_const)
+		{
+			if (strncmp(mem[i].operation, "jne", 3) == 0)
+			{
+				if (flags & (G_FLAG | L_FLAG))
+				{
+					strcpy(mem[i].operation, "jmp");
+					remove_until_label(mem, size, i + 1);
+					size_t prev = i;
+					i = indexOfLabel(mem, i, size, mem[i].operand1);
+					size_t next = nextOp(mem, size, prev);
+					size_t label_length = strlen(mem[prev].operand1);
+					if (strncmp(mem[prev].operand1, mem[next].operation, label_length) == 0 && strlen(mem[next].operation) == label_length + 1)
+					{
+						mem[prev].operation[0] = '\0';
+					}
+				}
+				else
+					mem[i].operation[0] = '\0';
+				continue;
+			}
+			if (strncmp(mem[i].operation, "je", 2) == 0)
+			{
+				if (flags & E_FLAG)
+				{
+					strcpy(mem[i].operation, "jmp");
+					remove_until_label(mem, size, i + 1);
+					size_t prev = i;
+					i = indexOfLabel(mem, i, size, mem[i].operand1);
+					size_t next = nextOp(mem, size, prev);
+					size_t label_length = strlen(mem[prev].operand1);
+					if (strncmp(mem[prev].operand1, mem[next].operation, label_length) == 0 && strlen(mem[next].operation) == label_length + 1)
+					{
+						mem[prev].operation[0] = '\0';
+					}
+				}
+				else
+					mem[i].operation[0] = '\0';
+				continue;
+			}
+			if (strncmp(mem[i].operation, "jg", 2) == 0)
+			{
+				if (flags & G_FLAG)
+				{
+					strcpy(mem[i].operation, "jmp");
+					remove_until_label(mem, size, i + 1);
+					size_t prev = i;
+					i = indexOfLabel(mem, i, size, mem[i].operand1);
+					size_t next = nextOp(mem, size, prev);
+					size_t label_length = strlen(mem[prev].operand1);
+					if (strncmp(mem[prev].operand1, mem[next].operation, label_length) == 0 && strlen(mem[next].operation) == label_length + 1)
+					{
+						mem[prev].operation[0] = '\0';
+					}
+				}
+				else
+					mem[i].operation[0] = '\0';
+				continue;
+			}
+			if (strncmp(mem[i].operation, "jl", 2) == 0)
+			{
+				if (flags & L_FLAG)
+				{
+					strcpy(mem[i].operation, "jmp");
+					remove_until_label(mem, size, i + 1);
+					size_t prev = i;
+					i = indexOfLabel(mem, i, size, mem[i].operand1);
+					size_t next = nextOp(mem, size, prev);
+					size_t label_length = strlen(mem[prev].operand1);
+					if (strncmp(mem[prev].operand1, mem[next].operation, label_length) == 0 && strlen(mem[next].operation) == label_length + 1)
+					{
+						mem[prev].operation[0] = '\0';
+					}
+				}
+				else
+					mem[i].operation[0] = '\0';
+				continue;
+			}
+			if (strncmp(mem[i].operation, "jge", 3) == 0)
+			{
+				if (flags & (G_FLAG | E_FLAG))
+				{
+					strcpy(mem[i].operation, "jmp");
+					remove_until_label(mem, size, i + 1);
+					size_t prev = i;
+					i = indexOfLabel(mem, i, size, mem[i].operand1);
+					size_t next = nextOp(mem, size, prev);
+					size_t label_length = strlen(mem[prev].operand1);
+					if (strncmp(mem[prev].operand1, mem[next].operation, label_length) == 0 && strlen(mem[next].operation) == label_length + 1)
+					{
+						mem[prev].operation[0] = '\0';
+					}
+				}
+				else
+					mem[i].operation[0] = '\0';
+				continue;
+			}
+			if (strncmp(mem[i].operation, "jle", 3) == 0)
+			{
+				if (flags & (L_FLAG | E_FLAG))
+				{
+					strcpy(mem[i].operation, "jmp");
+					remove_until_label(mem, size, i + 1);
+					size_t prev = i;
+					i = indexOfLabel(mem, i, size, mem[i].operand1);
+					size_t next = nextOp(mem, size, prev);
+					size_t label_length = strlen(mem[prev].operand1);
+					if (strncmp(mem[prev].operand1, mem[next].operation, label_length) == 0 && strlen(mem[next].operation) == label_length + 1)
+					{
+						mem[prev].operation[0] = '\0';
+					}
+				}
+				else
+					mem[i].operation[0] = '\0';
+				continue;
+			}
+			if (strncmp(mem[i].operation, "jmp", 3) == 0)
+			{
+				remove_until_label(mem, size, i + 1);
+				size_t prev = i;
+				i = indexOfLabel(mem, i, size, mem[i].operand1);
+				size_t next = nextOp(mem, size, prev);
+				size_t label_length = strlen(mem[prev].operand1);
+				if (strncmp(mem[prev].operand1, mem[next].operation, label_length) == 0 && strlen(mem[next].operation) == label_length + 1)
+				{
+					mem[prev].operation[0] = '\0';
+				}
+			}
+		}
+		if (mem[i].operand2[0] == '\0')
+			continue;
+		is_const_answer answer = is_const(mem[i].operand1);
+		if (answer.value)
+		{
+			if (answer.elem != NULL)
+				replace_with_const(mem[i].operand1, answer.elem);
+		}
+		if (strncmp(mem[i].operation, "mov", 3) == 0)
+		{
+			if (answer.value == 0)
+				set_const(mem[i].operand2, mem[i].operand1, 0);
+			else if (answer.elem != NULL)
+				set_const(mem[i].operand2, answer.elem->value, answer.value);
+			else
+				set_const(mem[i].operand2, mem[i].operand1, answer.value);
+		}
+		if (strncmp(mem[i].operation, "cmp", 3) == 0)
+		{
+			is_const_answer second = is_const(mem[i].operand2);
+			print_const_map();
+			if (answer.value && second.value)
+			{
+				flags_const = 1;
+				flags = 0;
+				char *op1;
+				if (answer.elem != NULL)
+					op1 = answer.elem->value;
+				else
+					op1 = mem[i].operand1;
+				char *op2 = second.elem->value;
+				int cmp_result = strcmp(op1, op2);
+				if (cmp_result < 0)
+					flags |= G_FLAG;
+				if (cmp_result == 0)
+					flags |= E_FLAG;
+				if (cmp_result > 0)
+					flags |= L_FLAG;
+				mem[i].operation[0] = '\0';
+			}
+			else
+				flags_const = 0;
+		}
+	}
+	for(size_t i = 0; i < size; i++){
+		if(mem[i].operation[0] == '\0')continue;
+		if(mem[i].operation[strlen(mem[i].operation) - 1] == ':'){
+			if(countLabelOccurances(mem, size, mem[i].operation) == 0)
+				mem[i].operation[0] = '\0';
+		}
+	}
+}
+
+void remove_until_label(ASMOP *mem, size_t size, size_t i)
+{
+	while (i < size)
+	{
+		if (mem[i].operation[0] != '\0' && mem[i].operation[strlen(mem[i].operation) - 1] == ':' && countLabelOccurances(mem, size, mem[i].operation) >= 1)
+		{
+			break;
+		}
+		else
+			mem[i].operation[0] = '\0';
+		i++;
+	}
+}
+
+size_t indexOfLabel(ASMOP *mem, size_t i, size_t size, char *label)
+{
+	size_t label_length = strlen(label);
+	while (i < size)
+	{
+		if (strncmp(mem[i].operation, label, label_length) == 0 && mem[i].operation[label_length] == ':')
+			return i;
+		i++;
+	}
+	return -1;
+}
+
+size_t countLabelOccurances(ASMOP *mem, size_t size, char *label)
+{
+	char label_name[64] = {0};
+	strncpy(label_name, label, strlen(label) - 1);
+	size_t t = 0;
+	for (size_t i = 0; i < size; i++)
+	{
+		if (mem[i].operation[0] != '\0' && strcmp(label_name, mem[i].operand1) == 0)
+			t++;
+	}
+	return t;
+}
+
+size_t nextOp(ASMOP *mem, size_t size, size_t i)
+{
+	i++;
+	while (i < size)
+	{
+		if (mem[i].operation[0] != '\0')
+			break;
+		i++;
+	}
+	return i;
+}
+
+size_t prevOp(ASMOP *mem, size_t size, size_t i)
+{
+	i--;
+	while (i < size)
+	{ // because it is unsigned we cannot test < 0
+		if (mem[i].operation[0] != '\0')
+			break;
+		i--;
+	}
+	return i;
+}
+
+is_const_answer is_const(char *operand)
+{
+	if (isImmediate(operand))
+	{
+		is_const_answer ans;
+		ans.value = 1;
+		ans.elem = NULL;
+		return ans;
+	}
+	const_hashmap_elem *ptr;
+	for (ptr = head->next; ptr != NULL; ptr = ptr->next)
+	{
+		if (strcmp(operand, ptr->key) == 0)
+		{
+			is_const_answer ans;
+			ans.value = ptr->is_const;
+			ans.elem = ptr;
+			return ans;
+		}
+	}
+	is_const_answer ans;
+	ans.value = 0;
+	ans.elem = NULL;
+	return ans;
+}
+
+void print_const_map()
+{
+	const_hashmap_elem *ptr;
+	for (ptr = head->next; ptr != NULL; ptr = ptr->next)
+	{
+		printf("'%s': '%s' %d\n", ptr->key, ptr->value, ptr->is_const);
+	}
+}
+
+void replace_with_const(char *operand, const_hashmap_elem *elem)
+{
+	strcpy(operand, elem->value);
+}
+
+void set_const(char *operand, char *value, unsigned is_const_v)
+{
+	is_const_answer ans = is_const(operand);
+	if (ans.elem == NULL)
+	{
+		const_hashmap_elem *ptr = (const_hashmap_elem *)malloc(sizeof(const_hashmap_elem));
+		const_hashmap_elem *next = head->next;
+		head->next = ptr;
+		ptr->next = next;
+		ptr->is_const = is_const_v;
+		strcpy(ptr->key, operand);
+		strcpy(ptr->value, value);
+	}
+	else
+	{
+		const_hashmap_elem *ptr = ans.elem;
+		ptr->is_const = is_const_v;
+		strcpy(ptr->key, operand);
+		strcpy(ptr->value, value);
+	}
+}
+
+unsigned isImmediate(char *operand)
+{
+	return operand[0] == '$';
+}
+
+void init_const_optimize()
+{
+	head = (const_hashmap_elem *)malloc(sizeof(const_hashmap_elem));
+	head->next = NULL;
+	head->is_const = 0;
+	head->key[0] = head->value[0] = '\0';
+}
+
+void finish_const_optimize()
+{
+	while (head != NULL)
+	{
+		const_hashmap_elem *next = head->next;
+		free(head);
+		head = next;
+	}
+}
+
+typedef struct needed_hashmap_elem
+{
+	char key[OPERAND_SIZE];
+	unsigned value;
+	struct needed_hashmap_elem *next;
+} needed_hashmap_elem;
+
+needed_hashmap_elem *needed_head;
+
+void init_usage_optimize()
+{
+	needed_head = (needed_hashmap_elem *)malloc(sizeof(needed_hashmap_elem));
+	needed_head->next = NULL;
+	needed_head->key[0] = needed_head->value = 0;
+}
+
+void finish_usage_optimize()
+{
+	while (needed_head != NULL)
+	{
+		needed_hashmap_elem *next = needed_head->next;
+		free(needed_head);
+		needed_head = next;
+	}
+}
+
+typedef struct
+{
+	unsigned value;
+	needed_hashmap_elem *ptr;
+} is_needed_answer;
+
+is_needed_answer is_needed(char *operand)
+{
+	needed_hashmap_elem *ptr;
+	for (ptr = needed_head->next; ptr != NULL; ptr = ptr->next)
+	{
+		if (strcmp(operand, ptr->key) == 0)
+		{
+			is_needed_answer ans;
+			ans.value = ptr->value;
+			ans.ptr = ptr;
+			return ans;
+		}
+	}
+	is_needed_answer ans;
+	ans.value = 0;
+	ans.ptr = NULL;
+	return ans;
+}
+
+void set_needed(char *operand, unsigned needed)
+{
+	is_needed_answer ans = is_needed(operand);
+	if (ans.ptr == NULL)
+	{
+		ans.ptr = (needed_hashmap_elem *)malloc(sizeof(needed_hashmap_elem));
+		needed_hashmap_elem *next = needed_head->next;
+		needed_head->next = ans.ptr;
+		ans.ptr->next = next;
+		strcpy(ans.ptr->key, operand);
+		ans.ptr->value = needed;
+	}
+	else
+	{
+		strcpy(ans.ptr->key, operand);
+		ans.ptr->value = needed;
+	}
+}
+
+void usage_optimize(ASMOP *mem, size_t size)
+{
+	for (int i = size - 1; i >= 0; i--)
+	{
+		if (mem[i].operation[0] == '\0')
+			continue;
+		if (mem[i].operand1[0] == '\0')
+			continue;
+		if (strncmp(mem[i].operation, "call", 3) == 0)
+		{
+			if (strcmp(mem[i].operand1, "_print_number@PLT") == 0)
+			{
+				set_needed("%rax", 1);
+				set_needed(STREAM_REGISTER, 1);
+			}
+			if (strcmp(mem[i].operand1, "_print_string@PLT") == 0)
+			{
+				set_needed("%rax", 1);
+				set_needed("%rbx", 1);
+				set_needed(STREAM_REGISTER, 1);
+			}
+		}
+		if (mem[i].operand2[0] == '\0')
+			continue;
+		if (strncmp(mem[i].operation, "mov", 3) == 0)
+		{
+			is_needed_answer ans = is_needed(mem[i].operand2);
+			if (!ans.value)
+			{
+				mem[i].operation[0] = '\0'; // delete instruction
+				continue;
+			}
+			set_needed(mem[i].operand1, 1);
+			set_needed(mem[i].operand2, 0);
+		}
+		if (strncmp(mem[i].operation, "cmp", 3) == 0)
+		{
+			set_needed(mem[i].operand1, 1);
+			set_needed(mem[i].operand2, 1);
+		}
+	}
+}
+
+void compiler_optimize(ASMOP *mem, size_t size)
+{
+	init_const_optimize();
+	const_optimize(mem, size);
+	finish_const_optimize();
+
+	init_usage_optimize();
+	usage_optimize(mem, size);
+	finish_usage_optimize();
 }
