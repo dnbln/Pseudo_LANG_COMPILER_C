@@ -4,6 +4,6 @@
 /.cproject
 /.settings/
 /.vscode/
-/bin/*
+/bin/binary
 /compile/*
 /lib/stdlib.o
