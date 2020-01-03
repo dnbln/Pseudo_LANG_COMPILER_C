@@ -398,7 +398,7 @@ void GetNextStatement(COMPILER_INTERNAL *state, Statement *statement, int *line,
 
 void Write(FILE *f, COMPILER_INTERNAL *internal_state)
 {
-	fprintf(f, ".globl _start\n_start:\n");
+	fprintf(f, ".globl _start\n_start:\n\tcallq _pseudo_lib_init@PLT\n");
 	for (int i = 0; i < internal_state->asmop_memptr; i++)
 	{
 		ASMOP *op = internal_state->asmop_mem + i;

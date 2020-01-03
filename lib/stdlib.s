@@ -71,6 +71,24 @@ _load_strlen_to_rbx.l2:
 	sub %rax, %rbx
 	ret
 
+.global _load_str_to_stack
+_load_str_to_stack:
+	movq $0, %r8
+_load_str_to_stack.l1:
+	cmpq %rbx, %r8
+	jge _load_str_to_stack.l2
+	movb (%rax, %r8), %cl
+	movb %cl, (%rdi, %r8)
+	incq %r8
+	jmp _load_str_to_stack.l1
+_load_str_to_stack.l2:
+	leaq (%rdi), %rax
+	ret
+
+.global _pseudo_lib_init
+_pseudo_lib_init:
+	ret
+
 .section .rodata
 .type digits, @object
 .align 16

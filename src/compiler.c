@@ -471,11 +471,6 @@ save_result(TYPE *result_type, ASMOP *memory, size_t *ptr, int *success)
 		memory[*ptr].operand3[0] = '\0';
 		(*ptr)++;
 
-		strcpy(memory[*ptr].operation, "callq");
-		strcpy(memory[*ptr].operand1, "_load_strlen_to_rbx@PLT");
-		memory[*ptr].operand2[0] = '\0';
-		(*ptr)++;
-
 		strcpy(memory[*ptr].operation, "movq");
 		strcpy(memory[*ptr].operand1, "%rbx");
 		strcpy(memory[*ptr].operand2, "CACHE_MEM+");
@@ -1039,6 +1034,12 @@ void usage_optimize(ASMOP *mem, size_t size)
 				set_needed("%rax", 1);
 				set_needed("%rbx", 1);
 				set_needed(STREAM_REGISTER, 1);
+			}
+			if (strcmp(mem[i].operand1, "_load_str_to_stack@PLT") == 0)
+			{
+				set_needed("%rax", 1);
+				set_needed("%rbx", 1);
+				set_needed("%rdi", 1);
 			}
 		}
 		if (strncmp(mem[i].operation, "mul", 3) == 0 || strncmp(mem[i].operation, "div", 3) == 0)
