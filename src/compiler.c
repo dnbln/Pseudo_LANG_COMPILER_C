@@ -1065,7 +1065,7 @@ void usage_optimize(ASMOP *mem, size_t size)
 			set_needed(mem[i].operand1, 1);
 			set_needed(mem[i].operand2, 1);
 		}
-		if (strncmp(mem[i].operation, "add", 3) == 0 || strncmp(mem[i].operation, "sub", 3) == 0 || strncmp(mem[i].operation, "and", 3) == 0 || strncmp(mem[i].operation, "or", 3) == 0 || strncmp(mem[i].operation, "xor", 3) == 0)
+		if (strncmp(mem[i].operation, "add", 3) == 0 || strncmp(mem[i].operation, "sub", 3) == 0 || strncmp(mem[i].operation, "and", 3) == 0 || strncmp(mem[i].operation, "or", 2) == 0 || strncmp(mem[i].operation, "xor", 3) == 0)
 		{
 			set_needed(mem[i].operand1, 1);
 			set_needed(mem[i].operand2, 1);
