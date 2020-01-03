@@ -591,34 +591,6 @@ size_t prevOp(ASMOP *mem, size_t size, size_t i);
 
 void const_optimize(ASMOP *mem, size_t size)
 {
-	FILE *f = stdout;
-	for (size_t i = 0; i < size; i++)
-	{
-		ASMOP *op = mem + i;
-		if (op->operation[0] == '\0')
-			continue;
-		fprintf(f, "\t%s", op->operation);
-		if (op->operand1[0] == '\0')
-		{
-			fprintf(f, "\n");
-			continue;
-		}
-		fprintf(f, " %s", op->operand1);
-		if (op->operand2[0] == '\0')
-		{
-			fprintf(f, "\n");
-			continue;
-		}
-		fprintf(f, ", %s", op->operand2);
-		if (op->operand3[0] == '\0')
-		{
-			fprintf(f, "\n");
-			continue;
-		}
-		fprintf(f, ", %s", op->operand3);
-		fprintf(f, "\n");
-	}
-
 	flags_const = 0;
 	for (size_t i = 0; i < size; i++)
 	{
