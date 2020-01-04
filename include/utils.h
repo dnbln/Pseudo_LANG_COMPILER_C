@@ -8,6 +8,8 @@
 #ifndef INCLUDE_UTILS_H_
 #define INCLUDE_UTILS_H_
 
+#include <stddef.h>
+
 typedef struct {
 	int (*belongs_to_class)(const char c);
 } CHARACTER_CLASS;
@@ -33,5 +35,7 @@ void Init_Utils();
 char* num_to_str(long long, char*);
 
 long long compute_length(char*);
+
+size_t size_str_to_num(char*);
 
 #endif /* INCLUDE_UTILS_H_ */

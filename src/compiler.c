@@ -18,6 +18,8 @@
 
 int compiler_line;
 
+OPTS *(*getOpts)();
+
 void Compile(COMPILER_INTERNAL *internal_state, int *success)
 {
 	internal_state->asmop_memptr = 0;
@@ -401,13 +403,14 @@ CACHE_PTR base;
 CACHE_PTR current;
 size_t cache_offset;
 
-void compiler_init()
+void compiler_init(OPTS *(*getOptsFunc)())
 {
 	string_list.string_count = 0;
 	cache_init();
 	cache_clear();
 	operators_init();
 	labels_init();
+	getOpts = getOptsFunc;
 }
 
 void cache_init()
@@ -437,7 +440,7 @@ void compiler_writeDataAndVariables(FILE *f)
 					string_list.strings[i]);
 		}
 	}
-	fprintf(f, ".section .bss\n\t.lcomm CACHE_MEM, 524288\n\t.lcomm STRINGS_POOL, 1048576\n\t.lcomm STRINGS_POOL_PTR, 8\n");
+	fprintf(f, ".section .bss\n\t.lcomm CACHE_MEM, 524288\n\t.lcomm STRINGS_POOL, %ld\n\t.lcomm STRINGS_POOL_PTR, 8\n", getOpts()->stringPoolSize);
 }
 
 CACHE_PTR
@@ -549,9 +552,12 @@ void cond_generate_assembly(COMPILER_INTERNAL *internal_state,
 	(*ptr)++;
 }
 
-void clean_str_pool_func(ASMOP *mem, size_t *ptr, int* success){
+void clean_str_pool_func(ASMOP *mem, size_t *ptr, int *success)
+{
 	strcpy(mem[*ptr].operation, "movq");
-	strcpy(mem[*ptr].operand1, "$1048576");
+	OPTS *opts = getOpts();
+	strcpy(mem[*ptr].operand1, "$");
+	num_to_str(opts->stringPoolSize, mem[*ptr].operand1+1);
 	strcpy(mem[*ptr].operand2, "STRINGS_POOL_PTR");
 	mem[*ptr].operand3[0] = '\0';
 	(*ptr)++;
@@ -786,7 +792,8 @@ void const_optimize(ASMOP *mem, size_t size)
 			else
 				flags_const = 0;
 		}
-		if(strncmp(mem[i].operation, "add", 3) == 0 || strncmp(mem[i].operation, "sub", 3) == 0 || strncmp(mem[i].operation, "or", 2) == 0 || strncmp(mem[i].operation, "xor", 3) == 0){
+		if (strncmp(mem[i].operation, "add", 3) == 0 || strncmp(mem[i].operation, "sub", 3) == 0 || strncmp(mem[i].operation, "or", 2) == 0 || strncmp(mem[i].operation, "xor", 3) == 0)
+		{
 			set_const(mem[i].operand2, "", 0);
 		}
 	}

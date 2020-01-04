@@ -9,9 +9,10 @@
 #define INCLUDE_PARSER_H_
 #include <stdio.h>
 
-#include "../include/tokens.h"
-#include "../include/statements.h"
-#include "../include/asmop.h"
+#include "tokens.h"
+#include "statements.h"
+#include "asmop.h"
+#include "opts.h"
 
 #define TEXT_READ_SIZE 65536
 #define TOKENS_MAX 32768
@@ -45,6 +46,7 @@ typedef struct {
 	size_t conditional_statements_ptr;
 } COMPILER_INTERNAL;
 
+void Parser_init(OPTS* (*getOptsFunc)());
 void Parse(FILE*, COMPILER_INTERNAL*, int*);
 
 void GetNextToken(COMPILER_INTERNAL*, Token*, int*, int*);

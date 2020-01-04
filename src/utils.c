@@ -70,3 +70,18 @@ long long compute_length(char* s){
 	}
 	return t;
 }
+
+size_t size_str_to_num(char* s) {
+	size_t bytes = 0;
+	while(*s >= '0' && *s <= '9'){
+		bytes = bytes * 10 + (*s - '0');
+		s++;
+	}
+	if(*s == 'G')
+		bytes *= 1024 * 1024 * 1024;
+	else if(*s == 'M')
+		bytes *= 1024 * 1024;
+	else if(*s == 'K')
+		bytes *= 1024;
+	return bytes;
+}

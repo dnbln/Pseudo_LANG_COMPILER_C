@@ -12,6 +12,7 @@
 #include "statements.h"
 #include "types.h"
 #include "cache.h"
+#include "opts.h"
 
 typedef struct
 {
@@ -36,7 +37,7 @@ int compiler_lookUpString(const char *stringVal);
 char *compiler_stringName(const int index);
 char *compiler_addString(const char *stringVal);
 
-void compiler_init();
+void compiler_init(OPTS* (*getOptsFunc)());
 
 void compiler_writeDataAndVariables(FILE *f);
 

@@ -16,16 +16,16 @@ compile/%.o: src/%.c include/%.h
 	$(CC) -o $@ -c $(CC_OPTS) $<
 
 COMPILE_PRG: bin/binary $(FILE)
-	bin/binary $(FILE)
-	as test.s -o test.o
-	ld --dynamic-linker /lib64/ld-linux-x86-64.so.2 -L lib -lstd test.o -o test
-	rm test.o
+	bin/binary $(COMPILER_ARGS)
+	as pseudo.s -o pseudo.o
+	ld --dynamic-linker /lib64/ld-linux-x86-64.so.2 -L lib -lstd pseudo.o -o pseudo
+	rm pseudo.o
 
 RUN_PRG:
 	LDLP=$$LD_LIBRARY_PATH;\
 	if [[ $$LD_LIBRARY_PATH != "*$$(pwd)/lib/*" ]]; then export LD_LIBRARY_PATH="$$(pwd)/lib/"; fi;\
-	./test;\
+	./pseudo;\
 	LD_LIBRARY_PATH=$$LDLP;
 
 clean:
-	rm -f test test.s compile/* bin/binary
+	rm -f pseudo pseudo.s compile/* bin/binary
