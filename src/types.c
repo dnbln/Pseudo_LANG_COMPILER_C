@@ -5,6 +5,6 @@ TYPE makeType(){
     TYPE t;
     t.typeid = VOID_TYPE;
     t.saved = NULL;
-    t.isConst = 0;
+    t.string_saved_to_pool = -1;
     return t;
 }

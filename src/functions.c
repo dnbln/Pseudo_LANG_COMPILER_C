@@ -34,9 +34,11 @@ ASMOP *print_generate_assembly(Token *t, ASMOP *memory, size_t *size, int *succe
 char *(*_varname)(const char *identifier_name);
 TYPE(*value_instructions)
 (Token *, int, ASMOP *, size_t *, int *);
+void (*clean_str_pool)(ASMOP*, size_t*, int*);
 
 void Init_Functions(char *(*varname)(const char *identifier_name),
-					TYPE (*v_instructions)(Token *, int, ASMOP *, size_t *, int *))
+					TYPE (*v_instructions)(Token *, int, ASMOP *, size_t *, int *),
+					void (*clean_str_pool_func)(ASMOP*, size_t*, int*))
 {
 	strcpy(declared_functions[0].name, "print");
 	declared_functions[0].generate_assembly = &print_generate_assembly;
@@ -46,6 +48,7 @@ void Init_Functions(char *(*varname)(const char *identifier_name),
 
 	_varname = varname;
 	value_instructions = v_instructions;
+	clean_str_pool = clean_str_pool_func;
 }
 
 void print_num_handler(ASMOP *memory, size_t *ptr, int *success)
@@ -62,6 +65,7 @@ void print_str_handler(ASMOP *memory, size_t *ptr, int *success)
 	strcpy(memory[*ptr].operand1, "_print_string@PLT");
 	memory[*ptr].operand2[0] = '\0';
 	(*ptr)++;
+	clean_str_pool(memory, ptr, success);
 }
 
 ASMOP *print_generate_assembly(Token *t, ASMOP *memory, size_t *ptr, int *success)

@@ -412,26 +412,29 @@ TYPE G_Number_Number(CACHE_PTR a, TYPE b, ASMOP *memory, size_t *ptr, int *succe
 
 TYPE ADD_String_String(CACHE_PTR a, TYPE b, ASMOP *memory, size_t *ptr, int *success)
 {
-    // allocate memory for second string
-    strcpy(memory[*ptr].operation, "subq");
-    strcpy(memory[*ptr].operand1, "%rbx");
-    strcpy(memory[*ptr].operand2, "%rsp");
-    memory[*ptr].operand3[0] = '\0';
-    (*ptr)++;
-
     strcpy(memory[*ptr].operation, "movq");
-    strcpy(memory[*ptr].operand1, "%rsp");
+    strcpy(memory[*ptr].operand1, "$STRINGS_POOL");
     strcpy(memory[*ptr].operand2, "%rdi");
     memory[*ptr].operand3[0] = '\0';
     (*ptr)++;
 
-    // load second string
+    strcpy(memory[*ptr].operation, "addq");
+    strcpy(memory[*ptr].operand1, "STRINGS_POOL_PTR");
+    strcpy(memory[*ptr].operand2, "%rdi");
+    memory[*ptr].operand3[0] = '\0';
+    (*ptr)++;
+
+    strcpy(memory[*ptr].operation, "subq");
+    strcpy(memory[*ptr].operand1, "%rbx");
+    strcpy(memory[*ptr].operand2, "%rdi");
+    memory[*ptr].operand3[0] = '\0';
+    (*ptr)++;
+
     strcpy(memory[*ptr].operation, "callq");
-    strcpy(memory[*ptr].operand1, "_load_str_to_stack@PLT");
+    strcpy(memory[*ptr].operand1, "_load_str_to_pool@PLT");
     memory[*ptr].operand2[0] = '\0';
     (*ptr)++;
 
-    // save the length of second string
     strcpy(memory[*ptr].operation, "movq");
     strcpy(memory[*ptr].operand1, "%rbx");
     strcpy(memory[*ptr].operand2, "%rdx");
@@ -448,7 +451,7 @@ TYPE ADD_String_String(CACHE_PTR a, TYPE b, ASMOP *memory, size_t *ptr, int *suc
 
     strcpy(memory[*ptr].operation, "movq");
     strcpy(memory[*ptr].operand1, "CACHE_MEM+");
-    num_to_str(a->cache_index+8, memory[*ptr].operand1 + 10);
+    num_to_str(a->cache_index + 8, memory[*ptr].operand1 + 10);
     strcpy(memory[*ptr].operand2, "%rbx");
     memory[*ptr].operand3[0] = '\0';
     (*ptr)++;
@@ -456,19 +459,13 @@ TYPE ADD_String_String(CACHE_PTR a, TYPE b, ASMOP *memory, size_t *ptr, int *suc
     // allocate memory for first string
     strcpy(memory[*ptr].operation, "subq");
     strcpy(memory[*ptr].operand1, "%rbx");
-    strcpy(memory[*ptr].operand2, "%rsp");
-    memory[*ptr].operand3[0] = '\0';
-    (*ptr)++;
-
-    strcpy(memory[*ptr].operation, "movq");
-    strcpy(memory[*ptr].operand1, "%rsp");
     strcpy(memory[*ptr].operand2, "%rdi");
     memory[*ptr].operand3[0] = '\0';
     (*ptr)++;
 
     // load first string
     strcpy(memory[*ptr].operation, "callq");
-    strcpy(memory[*ptr].operand1, "_load_str_to_stack@PLT");
+    strcpy(memory[*ptr].operand1, "_load_str_to_pool@PLT");
     memory[*ptr].operand2[0] = '\0';
     (*ptr)++;
 
@@ -479,7 +476,23 @@ TYPE ADD_String_String(CACHE_PTR a, TYPE b, ASMOP *memory, size_t *ptr, int *suc
     memory[*ptr].operand3[0] = '\0';
     (*ptr)++;
 
+    strcpy(memory[*ptr].operation, "subq");
+    strcpy(memory[*ptr].operand1, "$STRINGS_POOL");
+    strcpy(memory[*ptr].operand2, "%rdi");
+    memory[*ptr].operand3[0] = '\0';
+    (*ptr)++;
+
+    strcpy(memory[*ptr].operation, "movq");
+    strcpy(memory[*ptr].operand1, "%rdi");
+    strcpy(memory[*ptr].operand2, "STRINGS_POOL_PTR");
+    memory[*ptr].operand3[0] = '\0';
+    (*ptr)++;
+
     TYPE t = makeType();
     t.typeid = STRING_TYPE;
     return t;
+}
+
+void freeStringPool()
+{
 }

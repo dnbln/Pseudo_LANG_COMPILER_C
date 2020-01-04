@@ -17,7 +17,7 @@
 typedef struct {
 	unsigned long long int typeid;
 	void *saved;
-	unsigned isConst;
+	unsigned string_saved_to_pool;
 } TYPE;
 
 TYPE makeType();

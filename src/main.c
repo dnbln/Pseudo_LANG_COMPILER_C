@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
 		return COULD_NOT_OPEN_FILE;
 	}
 	Init_Utils();
-	Init_Functions(&compiler_varname, &compiler_value_instructions);
+	Init_Functions(&compiler_varname, &compiler_value_instructions, &clean_str_pool_func);
 	int success = 1;
 	Parse(f, &internal_state, &success);
 	fclose(f);

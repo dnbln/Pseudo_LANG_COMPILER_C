@@ -437,7 +437,7 @@ void compiler_writeDataAndVariables(FILE *f)
 					string_list.strings[i]);
 		}
 	}
-	fprintf(f, ".section .bss\n\t.lcomm CACHE_MEM, 524288\n");
+	fprintf(f, ".section .bss\n\t.lcomm CACHE_MEM, 524288\n\t.lcomm STRINGS_POOL, 1048576\n\t.lcomm STRINGS_POOL_PTR, 8\n");
 }
 
 CACHE_PTR
@@ -546,6 +546,14 @@ void cond_generate_assembly(COMPILER_INTERNAL *internal_state,
 	strcpy(memory[*ptr].operation, end.label_name);
 	strcat(memory[*ptr].operation, ":");
 	memory[*ptr].operand1[0] = '\0';
+	(*ptr)++;
+}
+
+void clean_str_pool_func(ASMOP *mem, size_t *ptr, int* success){
+	strcpy(mem[*ptr].operation, "movq");
+	strcpy(mem[*ptr].operand1, "$1048576");
+	strcpy(mem[*ptr].operand2, "STRINGS_POOL_PTR");
+	mem[*ptr].operand3[0] = '\0';
 	(*ptr)++;
 }
 
@@ -1035,7 +1043,7 @@ void usage_optimize(ASMOP *mem, size_t size)
 				set_needed("%rbx", 1);
 				set_needed(STREAM_REGISTER, 1);
 			}
-			if (strcmp(mem[i].operand1, "_load_str_to_stack@PLT") == 0)
+			if (strcmp(mem[i].operand1, "_load_str_to_pool@PLT") == 0)
 			{
 				set_needed("%rax", 1);
 				set_needed("%rbx", 1);

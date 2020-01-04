@@ -54,6 +54,8 @@ int compiler_getLine();
 
 void cond_generate_assembly(COMPILER_INTERNAL *, Conditional_Statement *, ASMOP *, size_t *, int *);
 
+void clean_str_pool_func(ASMOP*, size_t*, int*);
+
 void init_const_optimize();
 void const_optimize(ASMOP *mem, size_t size);
 void finish_const_optimize();

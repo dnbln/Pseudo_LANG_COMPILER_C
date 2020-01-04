@@ -7,7 +7,7 @@
 _print_char:
 	movq %rax, %rsi
 	movq $1, %rax
-	movq %r15, %rdi
+	movq STREAM_REGISTER, %rdi
 	movq $1, %rdx
 	syscall
 	retq
@@ -71,17 +71,17 @@ _load_strlen_to_rbx.l2:
 	sub %rax, %rbx
 	ret
 
-.global _load_str_to_stack
-_load_str_to_stack:
+.global _load_str_to_pool
+_load_str_to_pool:
 	movq $0, %r8
-_load_str_to_stack.l1:
+_load_str_to_pool.l1:
 	cmpq %rbx, %r8
-	jge _load_str_to_stack.l2
+	jge _load_str_to_pool.l2
 	movb (%rax, %r8), %cl
 	movb %cl, (%rdi, %r8)
 	incq %r8
-	jmp _load_str_to_stack.l1
-_load_str_to_stack.l2:
+	jmp _load_str_to_pool.l1
+_load_str_to_pool.l2:
 	leaq (%rdi), %rax
 	ret
 

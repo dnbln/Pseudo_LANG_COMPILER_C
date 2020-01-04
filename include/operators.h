@@ -15,4 +15,6 @@ void operators_init();
 
 OPERATOR *getOperator(const char *signature);
 
+void freeStringPool();// deallocates the memory that was allocated in the string pool
+
 #endif
