@@ -13,13 +13,15 @@
 #include "../include/functions.h"
 #include "../include/compiler.h"
 #include "../include/opts.h"
+#include "../include/vars.h"
 
 #define DEBUGGING
 
 COMPILER_INTERNAL internal_state;
 OPTS opts = {1048576};
 
-OPTS* getOpts_func(){
+OPTS *getOpts_func()
+{
 	return &opts;
 }
 
@@ -38,7 +40,7 @@ int main(int argc, char **argv)
 			source_file = argv[++i];
 		if (strcmp("--assembly", argv[i]) == 0 || strcmp("-a", argv[i]) == 0)
 			assembly_file = argv[++i];
-		if(strcmp("--strings-pool-size", argv[i]) == 0 || strcmp("-p", argv[i]) == 0)
+		if (strcmp("--strings-pool-size", argv[i]) == 0 || strcmp("-p", argv[i]) == 0)
 			opts.stringPoolSize = size_str_to_num(argv[++i]);
 	}
 
@@ -58,7 +60,7 @@ int main(int argc, char **argv)
 		return COULD_NOT_OPEN_FILE;
 	}
 	Init_Utils();
-	Init_Functions(&compiler_varname, &compiler_value_instructions, &clean_str_pool_func);
+	Init_Functions(&compiler_getLine, &compiler_value_instructions, &clean_str_pool_func);
 	int success = 1;
 	Parser_init(&getOpts_func);
 	Parse(f, &internal_state, &success);
@@ -73,6 +75,12 @@ int main(int argc, char **argv)
 	if (success)
 	{
 		f = fopen(assembly_file, "w");
+		if (f == NULL)
+		{
+			fprintf(stderr, "error: could not open file '%s'.\n", assembly_file);
+			perror("Reason");
+			return COULD_NOT_OPEN_FILE;
+		}
 		print_warnings(stdout);
 		Write(f, &internal_state);
 		return COMPILATION_SUCCESSFULL;

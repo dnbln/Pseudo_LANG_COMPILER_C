@@ -14,9 +14,10 @@
 #include "../include/errors.h"
 #include "../include/compiler.h"
 
-OPTS* (*getOpts)();
+OPTS *(*getOpts)();
 
-void Parser_init(OPTS* (*getOptsFunc)()){
+void Parser_init(OPTS *(*getOptsFunc)())
+{
 	getOpts = getOptsFunc;
 }
 
@@ -93,23 +94,38 @@ void GetNextToken(COMPILER_INTERNAL *state, Token *token, int *line, int *succes
 	}
 	if (starts_with(ptr, "if"))
 	{
-
 		*token = Make_nodata_Token(IF_TOKEN);
 		state->FILE_PTR = ptr + 2;
 		return;
 	}
 	if (starts_with(ptr, "then"))
 	{
-
 		*token = Make_nodata_Token(THEN_TOKEN);
 		state->FILE_PTR = ptr + 4;
 		return;
 	}
 	if (starts_with(ptr, "else"))
 	{
-
 		*token = Make_nodata_Token(ELSE_TOKEN);
 		state->FILE_PTR = ptr + 4;
+		return;
+	}
+	if (starts_with(ptr, "of type"))
+	{
+		*token = Make_nodata_Token(OF_TYPE_TOKEN);
+		state->FILE_PTR = ptr + 7;
+		return;
+	}
+	if (starts_with(ptr, "number"))
+	{
+		*token = Make_data_Token(TYPE_TOKEN, (void*) NUMBER_TYPE);
+		state->FILE_PTR = ptr + 6;
+		return;
+	}
+	if (starts_with(ptr, "string"))
+	{
+		*token = Make_data_Token(TYPE_TOKEN, (void*) STRING_TYPE);
+		state->FILE_PTR = ptr + 6;
 		return;
 	}
 	if (starts_with(ptr, "+"))
@@ -304,7 +320,6 @@ void GetNextStatement(COMPILER_INTERNAL *state, Statement *statement, int *line,
 		{
 			// assignment
 			statement->type = ASSIGNMENT_STATEMENT;
-			state->TOKEN_PTR += 2;
 			statement->data = (void *)(long long)state->TOKEN_PTR;
 			while (state->tokens[state->TOKEN_PTR].type != NEW_LINE_TOKEN)
 				state->TOKEN_PTR++;

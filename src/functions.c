@@ -5,14 +5,21 @@
  *      Author: dinu
  */
 #include "../include/functions.h"
-#include "../include/utils.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
-#define PREDEFINED_FUNCTIONS 2
+#include "../include/utils.h"
+#include "../include/vars.h"
+#include "../include/errors.h"
+#include "../include/tokens.h"
+
+#define PREDEFINED_FUNCTIONS 3
 
 Function declared_functions[PREDEFINED_FUNCTIONS];
+
+int (*getLine_func)();
 
 void GetFunction(const char *name, Function *f, int *found)
 {
@@ -30,15 +37,16 @@ void GetFunction(const char *name, Function *f, int *found)
 
 int end_of_line(Token *t); // returns the index in the array t of the first new line token
 
-ASMOP *print_generate_assembly(Token *t, ASMOP *memory, size_t *size, int *success);
-char *(*_varname)(const char *identifier_name);
+ASMOP *print_generate_assembly(Token *t, ASMOP *memory, size_t *ptr, int *success);
+
+ASMOP *declare_generate_assembly(Token *t, ASMOP *memory, size_t *ptr, int *success);
+
 TYPE(*value_instructions)
 (Token *, int, ASMOP *, size_t *, int *);
-void (*clean_str_pool)(ASMOP*, size_t*, int*);
+void (*clean_str_pool)(ASMOP *, size_t *, int *);
 
-void Init_Functions(char *(*varname)(const char *identifier_name),
-					TYPE (*v_instructions)(Token *, int, ASMOP *, size_t *, int *),
-					void (*clean_str_pool_func)(ASMOP*, size_t*, int*))
+void Init_Functions(int (*getLine)(), TYPE (*v_instructions)(Token *, int, ASMOP *, size_t *, int *),
+					void (*clean_str_pool_func)(ASMOP *, size_t *, int *))
 {
 	strcpy(declared_functions[0].name, "print");
 	declared_functions[0].generate_assembly = &print_generate_assembly;
@@ -46,7 +54,10 @@ void Init_Functions(char *(*varname)(const char *identifier_name),
 	strcpy(declared_functions[1].name, "write");
 	declared_functions[1].generate_assembly = &print_generate_assembly;
 
-	_varname = varname;
+	strcpy(declared_functions[2].name, "declare");
+	declared_functions[2].generate_assembly = &declare_generate_assembly;
+
+	getLine_func = getLine;
 	value_instructions = v_instructions;
 	clean_str_pool = clean_str_pool_func;
 }
@@ -77,7 +88,7 @@ ASMOP *print_generate_assembly(Token *t, ASMOP *memory, size_t *ptr, int *succes
 		if (t[eol - 2].type == FROM_TO_TOKEN && t[eol - 1].type == CONSOLE_TOKEN)
 			strcpy(memory[*ptr].operand1, "$1");
 		else if (t[eol - 3].type == FROM_TO_TOKEN && t[eol - 2].type == FILE_TOKEN && t[eol - 1].type == IDENTIFIER_TOKEN)
-			strcpy(memory[*ptr].operand1, _varname(t[eol - 1].data));
+			strcpy(memory[*ptr].operand1, varname(t[eol - 1].data));
 		strcpy(memory[*ptr].operand2, STREAM_REGISTER);
 		memory[*ptr].operand3[0] = '\0';
 		(*ptr)++;
@@ -121,6 +132,153 @@ ASMOP *print_generate_assembly(Token *t, ASMOP *memory, size_t *ptr, int *succes
 		print_str_handler(memory, ptr, success);
 	}
 
+	return memory;
+}
+
+ASMOP *declare_generate_assembly(Token *t, ASMOP *memory, size_t *ptr, int *success)
+{
+	int eol = end_of_line(t);
+	if (t[eol - 2].type != OF_TYPE_TOKEN)
+	{
+		ERROR err;
+		err.code = EXPECTED_TOKEN_NOT_FOUND;
+		err.line = getLine_func();
+		err.extra = (char *)malloc(8 * sizeof(char));
+		err.clear = 1;
+		strcpy(err.extra, "OF TYPE");
+		load_error(err);
+		*success = 0;
+		return memory;
+	}
+	unsigned long long var_type = (unsigned long long)t[eol - 1].data;
+	int last_p = 0;
+	unsigned assignment = 0;
+	for (int i = 0; i < eol - 2; i++)
+	{
+		if (t[i].type == ASSIGNMENT_TOKEN)
+			assignment = i;
+		if (t[i].type == COMMA_TOKEN)
+		{
+			if (t[last_p].type != IDENTIFIER_TOKEN)
+			{
+				ERROR err;
+				err.code = EXPECTED_TOKEN_NOT_FOUND;
+				err.line = getLine_func();
+				err.extra = (char *)malloc(11 * sizeof(char));
+				err.clear = 1;
+				strcpy(err.extra, "IDENTIFIER");
+				load_error(err);
+				*success = 0;
+				return memory;
+			}
+			char *identifier_name = t[last_p].data;
+			addVar(identifier_name, var_type);
+			if (assignment)
+			{
+				TYPE tp = value_instructions(t + assignment + 1, i - assignment - 1, memory, ptr, success);
+				if (tp.typeid != var_type)
+				{
+					ERROR err;
+					err.code = INCOMPATIBLE_TYPES;
+					err.line = getLine_func();
+					err.extra = (char *)malloc(64 * sizeof(char));
+					err.clear = 1;
+					err.extra[0] = '\0';
+					strcat(err.extra, types_typename(tp.typeid));
+					strcat(err.extra, " and ");
+					strcat(err.extra, types_typename(tp.typeid));
+					load_error(err);
+					*success = 0;
+					return memory;
+				}
+				char *variable_name = varname(identifier_name);
+				if (var_type == NUMBER_TYPE)
+				{
+					strcpy(memory[*ptr].operation, "movq");
+					strcpy(memory[*ptr].operand1, "%rax");
+					strcpy(memory[*ptr].operand2, variable_name);
+					memory[*ptr].operand3[0] = '\0';
+					(*ptr)++;
+				}
+				else if (var_type == STRING_TYPE)
+				{
+					strcpy(memory[*ptr].operation, "movq");
+					strcpy(memory[*ptr].operand1, "%rax");
+					strcpy(memory[*ptr].operand2, variable_name);
+					memory[*ptr].operand3[0] = '\0';
+					(*ptr)++;
+
+					strcpy(memory[*ptr].operation, "movq");
+					strcpy(memory[*ptr].operand1, "%rbx");
+					strcpy(memory[*ptr].operand2, variable_name);
+					strcat(memory[*ptr].operand2, "+8");
+					memory[*ptr].operand3[0] = '\0';
+					(*ptr)++;
+				}
+				assignment = 0;
+			}
+			last_p = i + 1;
+		}
+	}
+	if (t[last_p].type != IDENTIFIER_TOKEN)
+	{
+		ERROR err;
+		err.code = EXPECTED_TOKEN_NOT_FOUND;
+		err.line = getLine_func();
+		err.extra = (char *)malloc(11 * sizeof(char));
+		err.clear = 1;
+		strcpy(err.extra, "IDENTIFIER");
+		load_error(err);
+		*success = 0;
+		return memory;
+	}
+	char *identifier_name = t[last_p].data;
+	addVar(identifier_name, var_type);
+	int i = eol - 2;
+	if (assignment)
+	{
+		TYPE tp = value_instructions(t + assignment + 1, i - assignment - 1, memory, ptr, success);
+		if (tp.typeid != var_type)
+		{
+			ERROR err;
+			err.code = INCOMPATIBLE_TYPES;
+			err.line = getLine_func();
+			err.extra = (char *)malloc(64 * sizeof(char));
+			err.clear = 1;
+			err.extra[0] = '\0';
+			strcat(err.extra, types_typename(tp.typeid));
+			strcat(err.extra, " and ");
+			strcat(err.extra, types_typename(tp.typeid));
+			load_error(err);
+			*success = 0;
+			return memory;
+		}
+		char *variable_name = varname(identifier_name);
+		if (var_type == NUMBER_TYPE)
+		{
+			strcpy(memory[*ptr].operation, "movq");
+			strcpy(memory[*ptr].operand1, "%rax");
+			strcpy(memory[*ptr].operand2, variable_name);
+			memory[*ptr].operand3[0] = '\0';
+			(*ptr)++;
+		}
+		else if (var_type == STRING_TYPE)
+		{
+			strcpy(memory[*ptr].operation, "movq");
+			strcpy(memory[*ptr].operand1, "%rax");
+			strcpy(memory[*ptr].operand2, variable_name);
+			memory[*ptr].operand3[0] = '\0';
+			(*ptr)++;
+
+			strcpy(memory[*ptr].operation, "movq");
+			strcpy(memory[*ptr].operand1, "%rbx");
+			strcpy(memory[*ptr].operand2, variable_name);
+			strcat(memory[*ptr].operand2, "+8");
+			memory[*ptr].operand3[0] = '\0';
+			(*ptr)++;
+		}
+		assignment = 0;
+	}
 	return memory;
 }
 

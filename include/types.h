@@ -22,4 +22,6 @@ typedef struct {
 
 TYPE makeType();
 
+char* types_typename(int type);
+
 #endif /* INCLUDE_TYPES_H_ */

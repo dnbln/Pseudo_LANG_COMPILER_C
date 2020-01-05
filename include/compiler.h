@@ -27,8 +27,6 @@ void Compile_Statement(COMPILER_INTERNAL *, Statement, int *);
 
 TYPE compiler_value_instructions(Token *, int, ASMOP *, size_t *, int *);
 
-char *compiler_varname(const char *identifier_name);
-
 TYPE callOperator(CACHE_PTR a, unsigned long long int op, int op_class, TYPE b, ASMOP *memory, size_t *ptr, int *success);
 
 char *compiler_loadString(const char *stringVal);

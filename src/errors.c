@@ -17,7 +17,17 @@ ERROR errors[MAX_ERRORS];
 WARNING warnings[MAX_WARNINGS];
 
 char WarnMessages[][64] = {"", "", "", ""};
-char ErrorMessages[][64] = {"", "", "", "", "FUNCTION NOT FOUND", "STRING NOT ENDED", "OPERATOR NOT FOUND", "UNKNOWN STATEMENT TYPE"};
+char ErrorMessages[][64] = {"", 
+							"", 
+							"", 
+							"", 
+							"FUNCTION NOT FOUND", 
+							"STRING NOT ENDED", 
+							"OPERATOR NOT FOUND", 
+							"UNKNOWN STATEMENT TYPE", 
+							"EXPECTED TOKEN NOT FOUND", 
+							"INCOMPATIBLE TYPES", 
+							"VARIABLE NOT FOUND"};
 
 void load_error(ERROR err)
 {
@@ -70,9 +80,11 @@ char *getErrorMessage(int code)
 	return ErrorMessages[code];
 }
 
-void clear_errors(){
-	for(size_t i = 0; i < error_count; i++){
-		if(errors[i].clear)
+void clear_errors()
+{
+	for (size_t i = 0; i < error_count; i++)
+	{
+		if (errors[i].clear)
 			free(errors[i].extra);
 	}
 }

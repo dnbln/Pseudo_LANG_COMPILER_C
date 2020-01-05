@@ -24,8 +24,7 @@ typedef struct {
 
 void GetFunction(const char *name, Function *f, int *found);
 
-void Init_Functions(char* (*varname)(const char *identifier_name),
-		TYPE (*value_instructions)(Token*, int, ASMOP*, size_t*, int*),
+void Init_Functions(int (*getLine)(), TYPE (*value_instructions)(Token*, int, ASMOP*, size_t*, int*),
 		void (*clean_str_pool_func)(ASMOP*, size_t*, int*));
 
 #endif /* INCLUDE_FUNCTIONS_H_ */

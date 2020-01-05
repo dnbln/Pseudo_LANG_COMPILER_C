@@ -15,6 +15,7 @@
 #include "../include/labels.h"
 #include "../include/operators.h"
 #include "../include/utils.h"
+#include "../include/vars.h"
 
 int compiler_line;
 
@@ -45,6 +46,94 @@ void Compile_Statement(COMPILER_INTERNAL *internal_state,
 		Token *tokens = (Token *)statement_data[1];
 		generate_assembly(tokens, internal_state->asmop_mem,
 						  &(internal_state->asmop_memptr), success);
+	}
+	else if (type == ASSIGNMENT_STATEMENT)
+	{
+		Token *tokenptr = internal_state->tokens + (long long)s.data;
+		Token *assignment_token_adr = tokenptr;
+		while (assignment_token_adr->type != ASSIGNMENT_TOKEN && assignment_token_adr->type != NEW_LINE_TOKEN)
+		{
+			assignment_token_adr++;
+		}
+		if (assignment_token_adr->type == NEW_LINE_TOKEN)
+		{
+			ERROR err;
+			err.code = EXPECTED_TOKEN_NOT_FOUND;
+			err.line = compiler_getLine();
+			err.extra = (char *)malloc(10 * sizeof(char));
+			err.clear = 1;
+			strcpy(err.extra, "ASSIGNMENT TOKEN");
+			load_error(err);
+			*success = 0;
+			return;
+		}
+		if (tokenptr->type != IDENTIFIER_TOKEN)
+		{
+			ERROR err;
+			err.code = EXPECTED_TOKEN_NOT_FOUND;
+			err.line = compiler_getLine();
+			err.extra = (char *)malloc(10 * sizeof(char));
+			err.clear = 1;
+			strcpy(err.extra, "IDENTIFIER TOKEN");
+			load_error(err);
+			*success = 0;
+			return;
+		}
+		char *variable_name = varname(tokenptr->data);
+		if (variable_name == NULL)
+		{
+			ERROR err;
+			err.code = VARIABLE_NOT_FOUND;
+			err.line = compiler_getLine();
+			err.extra = (char *)malloc(64 * sizeof(char));
+			err.clear = 1;
+			strcpy(err.extra, tokenptr->data);
+			load_error(err);
+			*success = 0;
+			return;
+		}
+		tokenptr = assignment_token_adr + 1;
+		while (tokenptr->type != NEW_LINE_TOKEN)
+		{
+			tokenptr++;
+		}
+		TYPE t = compiler_value_instructions(assignment_token_adr + 1, tokenptr - assignment_token_adr - 1, internal_state->asmop_mem, &(internal_state->asmop_memptr), success);
+		unsigned long long int vartype = getVarType(variable_name);
+		if(t.typeid != vartype){
+			ERROR err;
+			err.code = INCOMPATIBLE_TYPES;
+			err.line = compiler_getLine();
+			err.extra = (char *)malloc(64 * sizeof(char));
+			err.clear = 1;
+			err.extra[0] = '\0';
+			strcat(err.extra, types_typename(vartype));
+			strcat(err.extra, " and ");
+			strcat(err.extra, types_typename(t.typeid));
+			load_error(err);
+			*success = 0;
+			return;
+		}
+		if(vartype == NUMBER_TYPE){
+			strcpy(internal_state->asmop_mem[internal_state->asmop_memptr].operation, "movq");
+			strcpy(internal_state->asmop_mem[internal_state->asmop_memptr].operand1, "%rax");
+			strcpy(internal_state->asmop_mem[internal_state->asmop_memptr].operand2, variable_name);
+			internal_state->asmop_mem[internal_state->asmop_memptr].operand3[0] = '\0';
+			internal_state->asmop_memptr++;
+		}
+		else if(vartype == STRING_TYPE){
+			strcpy(internal_state->asmop_mem[internal_state->asmop_memptr].operation, "movq");
+			strcpy(internal_state->asmop_mem[internal_state->asmop_memptr].operand1, "%rax");
+			strcpy(internal_state->asmop_mem[internal_state->asmop_memptr].operand2, variable_name);
+			internal_state->asmop_mem[internal_state->asmop_memptr].operand3[0] = '\0';
+			internal_state->asmop_memptr++;
+
+			strcpy(internal_state->asmop_mem[internal_state->asmop_memptr].operation, "movq");
+			strcpy(internal_state->asmop_mem[internal_state->asmop_memptr].operand1, "%rbx");
+			strcpy(internal_state->asmop_mem[internal_state->asmop_memptr].operand2, variable_name);
+			strcat(internal_state->asmop_mem[internal_state->asmop_memptr].operand2, "+8");
+			internal_state->asmop_mem[internal_state->asmop_memptr].operand3[0] = '\0';
+			internal_state->asmop_memptr++;
+		}
 	}
 	else if (type == COMPOSITE_STATEMENT)
 	{
@@ -106,6 +195,35 @@ TYPE compiler_value_instructions(Token *t,
 			(*ptr)++;
 
 			type.typeid = STRING_TYPE;
+			return type;
+		}
+		else if (t->type == IDENTIFIER_TOKEN)
+		{
+			char *name = varname((const char *)t->data);
+			type.typeid = getVarType(name);
+			if (type.typeid == NUMBER_TYPE)
+			{
+				strcpy(memory[*ptr].operation, "movq");
+				strcpy(memory[*ptr].operand1, name);
+				strcpy(memory[*ptr].operand2, "%rax");
+				memory[*ptr].operand3[0] = '\0';
+				(*ptr)++;
+			}
+			else if (type.typeid == STRING_TYPE)
+			{
+				strcpy(memory[*ptr].operation, "movq");
+				strcpy(memory[*ptr].operand1, name);
+				strcpy(memory[*ptr].operand2, "%rax");
+				memory[*ptr].operand3[0] = '\0';
+				(*ptr)++;
+
+				strcpy(memory[*ptr].operation, "movq");
+				strcpy(memory[*ptr].operand1, name);
+				strcat(memory[*ptr].operand1, "+8");
+				strcpy(memory[*ptr].operand2, "%rbx");
+				memory[*ptr].operand3[0] = '\0';
+				(*ptr)++;
+			}
 			return type;
 		}
 	}
@@ -261,23 +379,11 @@ void make_signature(unsigned long long op,
 			break;
 		}
 
-		if (type1.typeid == NUMBER_TYPE)
-			strcat(sig, "<Number");
-		else if (type1.typeid == STRING_TYPE)
-			strcat(sig, "<String");
-		else if (type1.typeid == ERROR_TYPE)
-			strcat(sig, "<Error");
-		else if (type1.typeid == VOID_TYPE)
-			strcat(sig, "<Void");
-
-		if (type2.typeid == NUMBER_TYPE)
-			strcat(sig, ",Number>");
-		else if (type2.typeid == STRING_TYPE)
-			strcat(sig, ",String>");
-		else if (type2.typeid == ERROR_TYPE)
-			strcat(sig, ",Error>");
-		else if (type2.typeid == VOID_TYPE)
-			strcat(sig, ",Void>");
+		strcat(sig, "<");
+		strcat(sig, types_typename(type1.typeid));
+		strcat(sig, ",");
+		strcat(sig, types_typename(type2.typeid));
+		strcat(sig, ">");
 	}
 	else if (op_class == EQUALITY_OP_TOKEN)
 	{
@@ -305,23 +411,11 @@ void make_signature(unsigned long long op,
 			break;
 		}
 
-		if (type1.typeid == NUMBER_TYPE)
-			strcat(sig, "<Number");
-		else if (type1.typeid == STRING_TYPE)
-			strcat(sig, "<String");
-		else if (type1.typeid == ERROR_TYPE)
-			strcat(sig, "<Error");
-		else if (type1.typeid == VOID_TYPE)
-			strcat(sig, "<Void");
-
-		if (type2.typeid == NUMBER_TYPE)
-			strcat(sig, ",Number>");
-		else if (type2.typeid == STRING_TYPE)
-			strcat(sig, ",String>");
-		else if (type2.typeid == ERROR_TYPE)
-			strcat(sig, ",Error>");
-		else if (type2.typeid == VOID_TYPE)
-			strcat(sig, ",Void>");
+		strcat(sig, "<");
+		strcat(sig, types_typename(type1.typeid));
+		strcat(sig, ",");
+		strcat(sig, types_typename(type2.typeid));
+		strcat(sig, ">");
 	}
 }
 
@@ -351,11 +445,6 @@ TYPE callOperator(CACHE_PTR a,
 		return t;
 	}
 	return opr->call(a, b, memory, ptr, success);
-}
-
-char *compiler_varname(const char *identifier_name)
-{
-	return NULL;
 }
 
 char *compiler_loadString(const char *stringValue)
@@ -441,6 +530,7 @@ void compiler_writeDataAndVariables(FILE *f)
 		}
 	}
 	fprintf(f, ".section .bss\n\t.lcomm CACHE_MEM, 524288\n\t.lcomm STRINGS_POOL, %ld\n\t.lcomm STRINGS_POOL_PTR, 8\n", getOpts()->stringPoolSize);
+	vars_print(f);
 }
 
 CACHE_PTR
@@ -557,7 +647,7 @@ void clean_str_pool_func(ASMOP *mem, size_t *ptr, int *success)
 	strcpy(mem[*ptr].operation, "movq");
 	OPTS *opts = getOpts();
 	strcpy(mem[*ptr].operand1, "$");
-	num_to_str(opts->stringPoolSize, mem[*ptr].operand1+1);
+	num_to_str(opts->stringPoolSize, mem[*ptr].operand1 + 1);
 	strcpy(mem[*ptr].operand2, "STRINGS_POOL_PTR");
 	mem[*ptr].operand3[0] = '\0';
 	(*ptr)++;
