@@ -3,6 +3,6 @@ begin
     a = a + b
     c = a + b + b
 
-    declare d = b + a of type string
+    declare d = b + a of type number
     print a, " ", b, " ", c, "\n"
 end
