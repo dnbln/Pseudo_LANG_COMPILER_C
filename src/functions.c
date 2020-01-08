@@ -184,7 +184,7 @@ ASMOP *declare_generate_assembly(Token *t, ASMOP *memory, size_t *ptr, int *succ
 					err.extra = (char *)malloc(64 * sizeof(char));
 					err.clear = 1;
 					err.extra[0] = '\0';
-					strcat(err.extra, types_typename(tp.typeid));
+					strcat(err.extra, types_typename(var_type));
 					strcat(err.extra, " and ");
 					strcat(err.extra, types_typename(tp.typeid));
 					load_error(err);
@@ -246,7 +246,7 @@ ASMOP *declare_generate_assembly(Token *t, ASMOP *memory, size_t *ptr, int *succ
 			err.extra = (char *)malloc(64 * sizeof(char));
 			err.clear = 1;
 			err.extra[0] = '\0';
-			strcat(err.extra, types_typename(tp.typeid));
+			strcat(err.extra, types_typename(var_type));
 			strcat(err.extra, " and ");
 			strcat(err.extra, types_typename(tp.typeid));
 			load_error(err);

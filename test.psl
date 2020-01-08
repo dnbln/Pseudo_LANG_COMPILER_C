@@ -1,6 +1,8 @@
 begin
     declare a <- 0, b <- 1, c of type number
-    a <- a + b
-    c <- a + b
+    a = a + b
+    c = a + b + b
+
+    declare d = b + a of type string
     print a, " ", b, " ", c, "\n"
 end
