@@ -1,8 +1,7 @@
-.PHONY: all COMPILE_PRG clean
-
 CC=gcc
 CC_OPTS=-Wall -g3
-OBJ_FILES=compile/main.o compile/compiler.o compile/errors.o compile/functions.o compile/parser.o compile/tokens.o compile/utils.o compile/operators.o compile/labels.o compile/types.o
+OBJ_FILES=compile/main.o compile/compiler.o compile/errors.o compile/functions.o compile/parser.o compile/tokens.o compile/utils.o compile/operators.o compile/labels.o compile/types.o compile/vars.o
+MAKEFLAGS += --silent
 
 all: bin/binary
 
@@ -29,3 +28,5 @@ RUN_PRG:
 
 clean:
 	rm -f pseudo pseudo.s compile/* bin/binary
+
+.PHONY: all RUN_PRG COMPILE_PRG clean

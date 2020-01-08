@@ -19,6 +19,8 @@
 #define OPERATOR_NOT_FOUND 6
 #define UNKNOWN_STATEMENT_TYPE 7
 #define EXPECTED_TOKEN_NOT_FOUND 8
+#define INCOMPATIBLE_TYPES 9
+#define VARIABLE_NOT_FOUND 10
 
 typedef struct {
 	unsigned int code;

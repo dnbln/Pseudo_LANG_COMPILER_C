@@ -1,3 +1,8 @@
 begin
-    print "12"+"345"+"6789" + "1011121314", "\n"
+    declare a <- 0, b <- 1, c of type number
+    a = a + b
+    c = a + b + b
+
+    declare d = b + a of type string
+    print a, " ", b, " ", c, "\n"
 end
