@@ -32,8 +32,8 @@ void Compile(COMPILER_INTERNAL *internal_state, int *success)
 }
 
 void Compile_Statement(COMPILER_INTERNAL *internal_state,
-					   Statement s,
-					   int *success)
+		       Statement s,
+		       int *success)
 {
 	const int type = s.type;
 	compiler_line = s.line;
@@ -42,10 +42,10 @@ void Compile_Statement(COMPILER_INTERNAL *internal_state,
 	{
 		long long *statement_data = s.data;
 		ASM_FUNC_GENERATE *generate_assembly =
-			(ASM_FUNC_GENERATE *)statement_data[0];
+		    (ASM_FUNC_GENERATE *)statement_data[0];
 		Token *tokens = (Token *)statement_data[1];
 		generate_assembly(tokens, internal_state->asmop_mem,
-						  &(internal_state->asmop_memptr), success);
+				  &(internal_state->asmop_memptr), success);
 	}
 	else if (type == ASSIGNMENT_STATEMENT)
 	{
@@ -60,7 +60,7 @@ void Compile_Statement(COMPILER_INTERNAL *internal_state,
 			ERROR err;
 			err.code = EXPECTED_TOKEN_NOT_FOUND;
 			err.line = compiler_getLine();
-			err.extra = (char *)malloc(10 * sizeof(char));
+			err.extra = (char *)malloc(18 * sizeof(char));
 			err.clear = 1;
 			strcpy(err.extra, "ASSIGNMENT TOKEN");
 			load_error(err);
@@ -72,7 +72,7 @@ void Compile_Statement(COMPILER_INTERNAL *internal_state,
 			ERROR err;
 			err.code = EXPECTED_TOKEN_NOT_FOUND;
 			err.line = compiler_getLine();
-			err.extra = (char *)malloc(10 * sizeof(char));
+			err.extra = (char *)malloc(18 * sizeof(char));
 			err.clear = 1;
 			strcpy(err.extra, "IDENTIFIER TOKEN");
 			load_error(err);
@@ -99,7 +99,8 @@ void Compile_Statement(COMPILER_INTERNAL *internal_state,
 		}
 		TYPE t = compiler_value_instructions(assignment_token_adr + 1, tokenptr - assignment_token_adr - 1, internal_state->asmop_mem, &(internal_state->asmop_memptr), success);
 		unsigned long long int vartype = getVarType(variable_name);
-		if(t.typeid != vartype){
+		if (t.typeid != vartype)
+		{
 			ERROR err;
 			err.code = INCOMPATIBLE_TYPES;
 			err.line = compiler_getLine();
@@ -113,14 +114,39 @@ void Compile_Statement(COMPILER_INTERNAL *internal_state,
 			*success = 0;
 			return;
 		}
-		if(vartype == NUMBER_TYPE){
+		if (vartype == NUMBER_TYPE)
+		{
 			strcpy(internal_state->asmop_mem[internal_state->asmop_memptr].operation, "movq");
 			strcpy(internal_state->asmop_mem[internal_state->asmop_memptr].operand1, "%rax");
 			strcpy(internal_state->asmop_mem[internal_state->asmop_memptr].operand2, variable_name);
 			internal_state->asmop_mem[internal_state->asmop_memptr].operand3[0] = '\0';
 			internal_state->asmop_memptr++;
 		}
-		else if(vartype == STRING_TYPE){
+		else if (vartype == STRING_TYPE)
+		{
+			strcpy(internal_state->asmop_mem[internal_state->asmop_memptr].operation, "movq");
+			strcpy(internal_state->asmop_mem[internal_state->asmop_memptr].operand1, "$STRINGS_VAR_MEM");
+			strcpy(internal_state->asmop_mem[internal_state->asmop_memptr].operand2, "%rdi");
+			internal_state->asmop_mem[internal_state->asmop_memptr].operand3[0] = '\0';
+			internal_state->asmop_memptr++;
+
+			strcpy(internal_state->asmop_mem[internal_state->asmop_memptr].operation, "subq");
+			strcpy(internal_state->asmop_mem[internal_state->asmop_memptr].operand1, "%rbx");
+			strcpy(internal_state->asmop_mem[internal_state->asmop_memptr].operand2, "STRINGS_VAR_MEM_PTR");
+			internal_state->asmop_mem[internal_state->asmop_memptr].operand3[0] = '\0';
+			internal_state->asmop_memptr++;
+
+			strcpy(internal_state->asmop_mem[internal_state->asmop_memptr].operation, "addq");
+			strcpy(internal_state->asmop_mem[internal_state->asmop_memptr].operand1, "STRINGS_VAR_MEM_PTR");
+			strcpy(internal_state->asmop_mem[internal_state->asmop_memptr].operand2, "%rdi");
+			internal_state->asmop_mem[internal_state->asmop_memptr].operand3[0] = '\0';
+			internal_state->asmop_memptr++;
+
+			strcpy(internal_state->asmop_mem[internal_state->asmop_memptr].operation, "callq");
+			strcpy(internal_state->asmop_mem[internal_state->asmop_memptr].operand1, "_load_str_to_pool@PLT");
+			internal_state->asmop_mem[internal_state->asmop_memptr].operand2[0] = '\0';
+			internal_state->asmop_memptr++;
+
 			strcpy(internal_state->asmop_mem[internal_state->asmop_memptr].operation, "movq");
 			strcpy(internal_state->asmop_mem[internal_state->asmop_memptr].operand1, "%rax");
 			strcpy(internal_state->asmop_mem[internal_state->asmop_memptr].operand2, variable_name);
@@ -145,16 +171,16 @@ void Compile_Statement(COMPILER_INTERNAL *internal_state,
 	{
 		Conditional_Statement *statement_data = (Conditional_Statement *)s.data;
 		cond_generate_assembly(internal_state, statement_data,
-							   internal_state->asmop_mem,
-							   &(internal_state->asmop_memptr), success);
+				       internal_state->asmop_mem,
+				       &(internal_state->asmop_memptr), success);
 	}
 }
 
 TYPE compiler_value_instructions(Token *t,
-								 int n,
-								 ASMOP *memory,
-								 size_t *ptr,
-								 int *success)
+				 int n,
+				 ASMOP *memory,
+				 size_t *ptr,
+				 int *success)
 {
 	TYPE type = makeType();
 	type.typeid = VOID_TYPE;
@@ -251,12 +277,31 @@ TYPE compiler_value_instructions(Token *t,
 				if (i == 0 && j == n - 1)
 				{
 					CACHE_PTR cache = t[i].data;
-					strcpy(memory[*ptr].operation, "movq");
-					strcpy(memory[*ptr].operand1, "CACHE_MEM+");
-					num_to_str(cache->cache_index, memory[*ptr].operand1 + 10);
-					strcpy(memory[*ptr].operand2, "%rax");
-					memory[*ptr].operand3[0] = '\0';
-					(*ptr)++;
+					if (cache->data_type.typeid == NUMBER_TYPE)
+					{
+						strcpy(memory[*ptr].operation, "movq");
+						strcpy(memory[*ptr].operand1, "CACHE_MEM+");
+						num_to_str(cache->cache_index, memory[*ptr].operand1 + 10);
+						strcpy(memory[*ptr].operand2, "%rax");
+						memory[*ptr].operand3[0] = '\0';
+						(*ptr)++;
+					}
+					else if (cache->data_type.typeid == STRING_TYPE)
+					{
+						strcpy(memory[*ptr].operation, "movq");
+						strcpy(memory[*ptr].operand1, "CACHE_MEM+");
+						num_to_str(cache->cache_index, memory[*ptr].operand1 + 10);
+						strcpy(memory[*ptr].operand2, "%rax");
+						memory[*ptr].operand3[0] = '\0';
+						(*ptr)++;
+
+						strcpy(memory[*ptr].operation, "movq");
+						strcpy(memory[*ptr].operand1, "CACHE_MEM+");
+						num_to_str(cache->cache_index + 8, memory[*ptr].operand1 + 10);
+						strcpy(memory[*ptr].operand2, "%rbx");
+						memory[*ptr].operand3[0] = '\0';
+						(*ptr)++;
+					}
 					return cache->data_type;
 				}
 				i = j;
@@ -264,9 +309,9 @@ TYPE compiler_value_instructions(Token *t,
 			}
 			int len = j - i - 1;
 			TYPE parenthesis_result_type =
-				compiler_value_instructions(t + i + 1, len, memory, ptr, success);
+			    compiler_value_instructions(t + i + 1, len, memory, ptr, success);
 			CACHE_PTR retptr =
-				save_result(&parenthesis_result_type, memory, ptr, success);
+			    save_result(&parenthesis_result_type, memory, ptr, success);
 			t[i].data = retptr;
 			t[j].data = &t[i];
 			if (i == 0 && j == n - 1)
@@ -288,9 +333,9 @@ TYPE compiler_value_instructions(Token *t,
 			TYPE left_type = compiler_value_instructions(t, i, memory, ptr, success);
 			CACHE_PTR left = save_result(&left_type, memory, ptr, success);
 			TYPE right = compiler_value_instructions(t + i + 1, n - i - 1, memory,
-													 ptr, success);
+								 ptr, success);
 			TYPE result = callOperator(left, (unsigned long long)t[i].data, t[i].type,
-									   right, memory, ptr, success);
+						   right, memory, ptr, success);
 			return result;
 		}
 	}
@@ -306,9 +351,9 @@ TYPE compiler_value_instructions(Token *t,
 			TYPE left_type = compiler_value_instructions(t, i, memory, ptr, success);
 			CACHE_PTR left = save_result(&left_type, memory, ptr, success);
 			TYPE right = compiler_value_instructions(t + i + 1, n - i - 1, memory,
-													 ptr, success);
+								 ptr, success);
 			TYPE result = callOperator(left, (unsigned long long)t[i].data, t[i].type,
-									   right, memory, ptr, success);
+						   right, memory, ptr, success);
 			return result;
 		}
 	}
@@ -320,15 +365,15 @@ TYPE compiler_value_instructions(Token *t,
 			continue;
 		}
 		if (t[i].type == ARITH_OP_TOKEN &&
-			((unsigned long long int)t[i].data == ADD ||
-			 (unsigned long long int)t[i].data == SUBTRACT))
+		    ((unsigned long long int)t[i].data == ADD ||
+		     (unsigned long long int)t[i].data == SUBTRACT))
 		{
 			TYPE left_type = compiler_value_instructions(t, i, memory, ptr, success);
 			CACHE_PTR left = save_result(&left_type, memory, ptr, success);
 			TYPE right = compiler_value_instructions(t + i + 1, n - i - 1, memory,
-													 ptr, success);
+								 ptr, success);
 			TYPE result = callOperator(left, (unsigned long long)t[i].data, t[i].type,
-									   right, memory, ptr, success);
+						   right, memory, ptr, success);
 			return result;
 		}
 	}
@@ -340,15 +385,15 @@ TYPE compiler_value_instructions(Token *t,
 			continue;
 		}
 		if (t[i].type == ARITH_OP_TOKEN &&
-			((unsigned long long int)t[i].data == MULTIPLY ||
-			 (unsigned long long int)t[i].data == DIVIDE))
+		    ((unsigned long long int)t[i].data == MULTIPLY ||
+		     (unsigned long long int)t[i].data == DIVIDE))
 		{
 			TYPE left_type = compiler_value_instructions(t, i, memory, ptr, success);
 			CACHE_PTR left = save_result(&left_type, memory, ptr, success);
 			TYPE right = compiler_value_instructions(t + i + 1, n - i - 1, memory,
-													 ptr, success);
+								 ptr, success);
 			TYPE result = callOperator(left, (unsigned long long)t[i].data, t[i].type,
-									   right, memory, ptr, success);
+						   right, memory, ptr, success);
 			return result;
 		}
 	}
@@ -356,10 +401,10 @@ TYPE compiler_value_instructions(Token *t,
 }
 
 void make_signature(unsigned long long op,
-					int op_class,
-					TYPE type1,
-					TYPE type2,
-					char sig[64])
+		    int op_class,
+		    TYPE type1,
+		    TYPE type2,
+		    char sig[64])
 {
 	sig[0] = '\0';
 	if (op_class == ARITH_OP_TOKEN)
@@ -420,12 +465,12 @@ void make_signature(unsigned long long op,
 }
 
 TYPE callOperator(CACHE_PTR a,
-				  unsigned long long op,
-				  int op_class,
-				  TYPE b,
-				  ASMOP *memory,
-				  size_t *ptr,
-				  int *success)
+		  unsigned long long op,
+		  int op_class,
+		  TYPE b,
+		  ASMOP *memory,
+		  size_t *ptr,
+		  int *success)
 {
 	char sig[64] = {};
 	make_signature(op, op_class, a->data_type, b, sig);
@@ -484,7 +529,7 @@ char *compiler_addString(const char *stringVal)
 	strcpy(string_list.strings[string_list.string_count], stringVal);
 	strcpy(string_list.strName[string_list.string_count], "str");
 	num_to_str(string_list.string_count,
-			   string_list.strName[string_list.string_count] + 3);
+		   string_list.strName[string_list.string_count] + 3);
 	return string_list.strName[string_list.string_count++];
 }
 
@@ -526,10 +571,10 @@ void compiler_writeDataAndVariables(FILE *f)
 		for (size_t i = 0; i < string_list.string_count; i++)
 		{
 			fprintf(f, "%s:\n\t.ascii \"%s\"\n", string_list.strName[i],
-					string_list.strings[i]);
+				string_list.strings[i]);
 		}
 	}
-	fprintf(f, ".section .bss\n\t.lcomm CACHE_MEM, 524288\n\t.lcomm STRINGS_POOL, %ld\n\t.lcomm STRINGS_POOL_PTR, 8\n", getOpts()->stringPoolSize);
+	fprintf(f, ".section .bss\n\t.lcomm CACHE_MEM, 524288\n\t.lcomm STRINGS_POOL, %ld\n\t.lcomm STRINGS_POOL_PTR, 8\n\t.lcomm STRINGS_VAR_MEM, %ld\n\t.lcomm STRINGS_VAR_MEM_PTR, 4\n", getOpts()->stringPoolSize, getOpts()->strings_var_mem_size);
 	vars_print(f);
 }
 
@@ -580,7 +625,7 @@ save_result(TYPE *result_type, ASMOP *memory, size_t *ptr, int *success)
 		return ret;
 	}
 	else if (result_type->typeid == VOID_TYPE ||
-			 result_type->typeid == ERROR_TYPE)
+		 result_type->typeid == ERROR_TYPE)
 	{
 		result_type->saved = (void *)current;
 		current->data_type = *result_type;
@@ -598,13 +643,13 @@ int compiler_getLine()
 }
 
 void cond_generate_assembly(COMPILER_INTERNAL *internal_state,
-							Conditional_Statement *statement,
-							ASMOP *memory,
-							size_t *ptr,
-							int *success)
+			    Conditional_Statement *statement,
+			    ASMOP *memory,
+			    size_t *ptr,
+			    int *success)
 {
 	TYPE t = compiler_value_instructions(
-		statement->condition.ptr, statement->condition.tn, memory, ptr, success);
+	    statement->condition.ptr, statement->condition.tn, memory, ptr, success);
 	if (*success == 0)
 		return;
 	if (t.typeid != NUMBER_TYPE)
@@ -839,6 +884,11 @@ void const_optimize(ASMOP *mem, size_t size)
 				}
 			}
 		}
+		if (strncmp(mem[i].operation, "call", 4) == 0)
+		{
+			if (strcmp(mem[i].operand1, "_load_str_to_pool@PLT") == 0)
+				set_const("%rax", "", 0);
+		}
 		if (mem[i].operand2[0] == '\0')
 			continue;
 		is_const_answer answer = is_const(mem[i].operand1);
@@ -859,7 +909,6 @@ void const_optimize(ASMOP *mem, size_t size)
 		if (strncmp(mem[i].operation, "cmp", 3) == 0)
 		{
 			is_const_answer second = is_const(mem[i].operand2);
-			print_const_map();
 			if (answer.value && second.value)
 			{
 				flags_const = 1;

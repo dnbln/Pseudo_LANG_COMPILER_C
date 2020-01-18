@@ -2,7 +2,9 @@ begin
     declare a <- 0, b <- 1, c of type number
     a = a + b
     c = a + b + b
+    declare s <- "ab" + ("cd" + "ef") + "gh" of type string
 
     declare d = b + a of type number
     print a, " ", b, " ", c, "\n"
+    print s, "\n"
 end
