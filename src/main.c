@@ -18,7 +18,7 @@
 #define DEBUGGING
 
 COMPILER_INTERNAL internal_state;
-OPTS opts = {1048576};
+OPTS opts = {1048576, 1048576};
 
 OPTS *getOpts_func()
 {
@@ -42,6 +42,8 @@ int main(int argc, char **argv)
 			assembly_file = argv[++i];
 		if (strcmp("--strings-pool-size", argv[i]) == 0 || strcmp("-p", argv[i]) == 0)
 			opts.stringPoolSize = size_str_to_num(argv[++i]);
+		if (strcmp("--strings-var-mem-size", argv[i]) == 0 || strcmp("--svarmem", argv[i]) == 0)
+			opts.strings_var_mem_size = size_str_to_num(argv[++i]);
 	}
 
 #ifndef DEBUGGING

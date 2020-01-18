@@ -419,7 +419,7 @@ void GetNextStatement(COMPILER_INTERNAL *state, Statement *statement, int *line,
 
 void Write(FILE *f, COMPILER_INTERNAL *internal_state)
 {
-	fprintf(f, ".globl _start\n_start:\n\tcallq _pseudo_lib_init@PLT\n\tmovq $%ld, STRINGS_POOL_PTR\n", getOpts()->stringPoolSize);
+	fprintf(f, ".globl _start\n_start:\n\tcallq _pseudo_lib_init@PLT\n\tmovq $%ld, STRINGS_POOL_PTR\n\tmovq $%ld, STRINGS_VAR_MEM_PTR\n", getOpts()->stringPoolSize, getOpts()->strings_var_mem_size);
 	for (int i = 0; i < internal_state->asmop_memptr; i++)
 	{
 		ASMOP *op = internal_state->asmop_mem + i;
